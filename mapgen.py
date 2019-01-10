@@ -15,6 +15,8 @@ movecost[tree] = 2
 
 traversable = [ground, stairs, ruin, tree]
 
+#width = 150
+#height = 40
 width = 70
 height = 35
 size = width * height
@@ -67,36 +69,36 @@ def inbounds(x, y, buffer=0):
             y < height - buffer and
             y >= buffer)
 
-def getnumadjacentwalls(point, worldmap, buffer=0):
+def adjacenttile(point, tiletype, worldmap, buffer=0):
     result = []
     x = point[0]
     y = point[1]
 
     if (inbounds(x-1, y, buffer) and
-        worldmap.gettile(x-1, y) == wall):
+        worldmap.gettile(x-1, y) == tiletype):
         result.append(tuple([x-1, y]))
     if (inbounds(x+1, y, buffer) and
-        worldmap.gettile(x+1, y) == wall):
+        worldmap.gettile(x+1, y) == tiletype):
         result.append(tuple([x+1, y]))
         
     if (inbounds(x, y-1, buffer) and
-        worldmap.gettile(x, y-1) == wall):
+        worldmap.gettile(x, y-1) == tiletype):
         result.append(tuple([x, y-1]))
     if (inbounds(x, y+1, buffer) and
-        worldmap.gettile(x, y+1) == wall):
+        worldmap.gettile(x, y+1) == tiletype):
         result.append(tuple([x, y+1]))
         
     if (inbounds(x-1, y-1, buffer) and
-        worldmap.gettile(x-1, y-1) == wall):
+        worldmap.gettile(x-1, y-1) == tiletype):
         result.append(tuple([x-1, y-1]))
     if (inbounds(x-1, y+1, buffer) and
-        worldmap.gettile(x-1, y+1) == wall):
+        worldmap.gettile(x-1, y+1) == tiletype):
         result.append(tuple([x-1, y+1]))
     if (inbounds(x+1, y-1, buffer) and
-        worldmap.gettile(x+1, y-1) == wall):
+        worldmap.gettile(x+1, y-1) == tiletype):
         result.append(tuple([x+1, y-1]))
     if (inbounds(x+1, y+1, buffer) and
-        worldmap.gettile(x+1, y+1) == wall):
+        worldmap.gettile(x+1, y+1) == tiletype):
         result.append(tuple([x+1, y+1]))
 
     #print(point, len(result), result)
@@ -170,15 +172,32 @@ def astar(start, goal, worldmap):
             fScore[n] = t_gScore + h(n, goal)
     return -1
 
-def cellularautomata(percentwalls=.4):
+def cellularautomata():
     newmap = tilemap()
+
+    scalemod = size / 1600 
+
+    percentwalls=.32
+    percentwalls += 0.01 * scalemod
+    
+    percentwater=.006
+    lakesize=0.7
+    
+    percenttrees=.005
+    forestsize=0.6
+    
+    percentruins=.003
+    percentruins += 0.0025 * scalemod
+    ruinsize=0.1
     
     gens = 3
-    
+
+    # walls
     for i in range(1, width-1):
         for j in range(1, height-1):
             newmap.settile(tuple([i, j]), ground)
-            if (j != height / 2 and
+            if ((j == height / 2 and
+                 random.random() < percentwalls * 1.5) or
                 random.random() < percentwalls):
                 newmap.settile(tuple([i, j]), wall)
 
@@ -187,18 +206,74 @@ def cellularautomata(percentwalls=.4):
         for i in range(1, width-1):
             for j in range(1, height-1):
                 point = tuple([i, j])
-                adjwalls = getnumadjacentwalls(point, oldmap)
+                adjwalls = adjacenttile(point, wall, oldmap)
                 if (adjwalls >= 4):
                     newmap.settile(point, wall)
                 else:
                     newmap.settile(point, ground)
+
+    # water
+    for i in range(1, width-1):
+        for j in range(1, height-1):
+            if (random.random() < percentwater and
+                newmap.gettile(i, j) == wall):
+                newmap.settile(tuple([i, j]), water)
+
+    for g in range(gens):
+        oldmap = newmap.copy()
+        for i in range(1, width-1):
+            for j in range(1, height-1):
+                point = tuple([i, j])
+                adjwater = adjacenttile(point, water, oldmap)
+                if (adjwater > 0 and
+                    random.random() < lakesize and
+                    not oldmap.gettile(i, j) == ground):
+                    newmap.settile(point, water)
+
+    # trees
+    for i in range(1, width-1):
+        for j in range(1, height-1):
+            if (random.random() < percenttrees and
+                newmap.gettile(i, j) == ground):
+                newmap.settile(tuple([i, j]), tree)
+
+    for g in range(gens):
+        oldmap = newmap.copy()
+        for i in range(1, width-1):
+            for j in range(1, height-1):
+                point = tuple([i, j])
+                adjtree = adjacenttile(point, tree, oldmap) + \
+                    adjacenttile(point, water, oldmap)
+                if (adjtree > 0 and
+                    random.random() < forestsize and
+                    oldmap.gettile(i, j) == ground):
+                    newmap.settile(point, tree)
+
+    # ruin
+    for i in range(1, width-1):
+        for j in range(1, height-1):
+            if (random.random() < percentruins and
+                not newmap.gettile(i, j) == water):
+                newmap.settile(tuple([i, j]), ruin)
+
+    for g in range(gens):
+        oldmap = newmap.copy()
+        for i in range(1, width-1):
+            for j in range(1, height-1):
+                point = tuple([i, j])
+                adjruin = adjacenttile(point, ruin, oldmap)
+                if (adjruin > 0 and
+                    random.random() < ruinsize and
+                    (oldmap.gettile(i, j) == ground or
+                     oldmap.gettile(i, j) == wall)):
+                    newmap.settile(point, ruin)
 
     return newmap
 
 def setsemifarstairs(worldmap):
     groundtiles = worldmap.getgroundtiles()
     s1 = random.choice(groundtiles)
-    while (getnumadjacentwalls(s1, worldmap) > 2):
+    while (adjacenttile(s1, wall, worldmap) > 2):
         s1 = random.choice(groundtiles)
     groundtiles = sorted(groundtiles,
                          key=lambda tile: manhattandist(s1, tile),
@@ -207,7 +282,8 @@ def setsemifarstairs(worldmap):
     s2 = random.choice(tiles)
     while (astar(s1, s2, worldmap) < 20 and
            len(tiles) > 0 and
-           getnumadjacentwalls(s2, worldmap) > 2):
+           (adjacenttile(s2, wall, worldmap)+\
+            adjacenttile(s2, water, worldmap)) > 2):
         s2 = random.choice(tiles)
         tiles.remove(s2)
     
@@ -228,18 +304,17 @@ def main():
     
     while(1):
         input()
-        wallspercent = 0.36
-        tilemap = mapgenerator(wallspercent)
+        tilemap = mapgenerator()
         dist = setsemifarstairs(tilemap)
 
         stairstries = 0
         while dist < 45:
-            if stairstries < 5:
+            if stairstries < 10:
                 dist = setsemifarstairs(tilemap)
                 stairstries += 1
             else:
                 print("making new map...")
-                mapgenerator(wallspercent)
+                mapgenerator()
                 stairstries = 0
             
         drawmap(tilemap)
