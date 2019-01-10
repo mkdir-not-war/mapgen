@@ -1,4 +1,5 @@
 import random
+from math import sqrt
 
 water = '~'
 wall = '#'
@@ -15,10 +16,9 @@ movecost[tree] = 2
 
 traversable = [ground, stairs, ruin, tree]
 
-#width = 150
-#height = 40
-width = 70
-height = 35
+#width = 150; height = 40
+#width = 70; height = 35
+width = 40; height = 20
 size = width * height
 
 class tilemap:
@@ -301,6 +301,8 @@ def drawmap(worldmap):
 def main():
     maps = 0
     mapgenerator = cellularautomata
+
+    mindist = sqrt(size) * 0.9
     
     while(1):
         input()
@@ -308,8 +310,8 @@ def main():
         dist = setsemifarstairs(tilemap)
 
         stairstries = 0
-        while dist < 45:
-            if stairstries < 10:
+        while dist < mindist:
+            if stairstries < 20:
                 dist = setsemifarstairs(tilemap)
                 stairstries += 1
             else:
