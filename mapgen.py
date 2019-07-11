@@ -16,9 +16,10 @@ movecost[tree] = 2
 
 traversable = [ground, stairs, ruin, tree]
 
-#width = 150; height = 40
-#width = 70; height = 35
-width = 40; height = 20
+#width = 230; height = 58
+#width = 180; height = 42 # big boi
+width = 70; height = 35 # normal size
+#width = 28; height = 16 # mini map
 size = width * height
 
 class tilemap:
@@ -175,20 +176,25 @@ def astar(start, goal, worldmap):
 def cellularautomata():
     newmap = tilemap()
 
-    scalemod = size / 1600 
+    scalemod = size / 8000 
 
-    percentwalls=.32
-    percentwalls += 0.01 * scalemod
+    percentwalls=.34
+    percentwalls += 0.04 * sqrt(scalemod)
+    wallsize=0.9
     
     percentwater=.006
     lakesize=0.7
     
-    percenttrees=.005
-    forestsize=0.6
+    percenttrees=.009
+    forestsize=0.62
     
-    percentruins=.003
-    percentruins += 0.0025 * scalemod
+    '''
+    percentruins=.0036
+    fieldpercentruins=.9
+    percentruins += 0.0025 * sqrt(scalemod)
     ruinsize=0.1
+    ruinsizeadj=0.5
+    '''
     
     gens = 3
 
@@ -207,7 +213,8 @@ def cellularautomata():
             for j in range(1, height-1):
                 point = tuple([i, j])
                 adjwalls = adjacenttile(point, wall, oldmap)
-                if (adjwalls >= 4):
+                if (adjwalls >= 4 and
+                    random.random() < wallsize):
                     newmap.settile(point, wall)
                 else:
                     newmap.settile(point, ground)
@@ -250,10 +257,13 @@ def cellularautomata():
                     newmap.settile(point, tree)
 
     # ruin
+    '''
     for i in range(1, width-1):
         for j in range(1, height-1):
-            if (random.random() < percentruins and
-                not newmap.gettile(i, j) == water):
+            if ((random.random() < percentruins and
+                not newmap.gettile(i, j) == water) or
+                (adjacenttile(point, ground, newmap) >= 8 and
+                 random.random() < fieldpercentruins)):
                 newmap.settile(tuple([i, j]), ruin)
 
     for g in range(gens):
@@ -262,11 +272,26 @@ def cellularautomata():
             for j in range(1, height-1):
                 point = tuple([i, j])
                 adjruin = adjacenttile(point, ruin, oldmap)
-                if (adjruin > 0 and
-                    random.random() < ruinsize and
+                if (((adjruin > 0 and
+                    random.random() < ruinsize) or
+                    (adjruin >= 2 and
+                    random.random() < ruinsizeadj)) and
                     (oldmap.gettile(i, j) == ground or
-                     oldmap.gettile(i, j) == wall)):
+                     oldmap.gettile(i, j) == wall or
+                     oldmap.gettile(i, j) == ruin)):
                     newmap.settile(point, ruin)
+    '''
+
+    '''
+    # remove interior ruins
+    oldmap = newmap.copy()
+    for i in range(1, width-1):
+        for j in range(1, height-1):
+            adjruinwall = adjacenttile(point, ruin, oldmap) +\
+                          adjacenttile(point, wall, oldmap)
+            if (adjruinwall > 4):
+                newmap.settile(point, ground)
+    '''
 
     return newmap
 
@@ -275,9 +300,6 @@ def setsemifarstairs(worldmap):
     s1 = random.choice(groundtiles)
     while (adjacenttile(s1, wall, worldmap) > 2):
         s1 = random.choice(groundtiles)
-    groundtiles = sorted(groundtiles,
-                         key=lambda tile: manhattandist(s1, tile),
-                         reverse=True)
     tiles = groundtiles[:]
     s2 = random.choice(tiles)
     while (astar(s1, s2, worldmap) < 20 and
@@ -299,15 +321,13 @@ def drawmap(worldmap):
         print(''.join(worldmap.tiles[row*width:(row+1)*width]))
 
 def main():
-    maps = 0
     mapgenerator = cellularautomata
-
-    mindist = sqrt(size) * 0.9
     
     while(1):
         input()
         tilemap = mapgenerator()
         dist = setsemifarstairs(tilemap)
+        mindist = sqrt(size) * 0.9
 
         stairstries = 0
         while dist < mindist:
@@ -318,6 +338,7 @@ def main():
                 print("making new map...")
                 mapgenerator()
                 stairstries = 0
+                mindist -= 1
             
         drawmap(tilemap)
 
