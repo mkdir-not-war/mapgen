@@ -45,10 +45,12 @@ def potency(compounds, signature):
 	return min(values)
 
 class Ingredient():
-	def __init__(self, name, compounds, base=False):
+	def __init__(self, name, compounds, crushed=None, base=False):
 		self.name = name
 		self.compounds = compounds.copy() # {name : amount}
 		self.effects = self.calculateeffects()
+		self.crushed = crushed
+		self.base = base
 
 	def calculateeffects(self):
 		result = {} # [(effect, potency), ...]
@@ -56,14 +58,19 @@ class Ingredient():
 							if i in self.compounds.keys() else 0 
 							for i in list(compound_names)]	
 		scores, effects = effect_ingredient_similarity(
-			tuple(compound_vector), 4)
+			tuple(compound_vector), 3)
 		for e_index in range(len(effects)):
 			effect = effects[e_index]
 			compound_potency = potency(self.compounds, effect.signature)
 			effect_potency = int(max((10.0 * (compound_potency) * \
 				scores[e_index]), 0))
-			result[effect.stat] = [effect, effect_potency]
+			if (effect_potency > 0):
+				result[effect.stat] = [effect, effect_potency]
 
+		return result
+
+	def crush(self):
+		result = ingredients[self.crushed]
 		return result
 
 	def printeffects(self):
@@ -79,14 +86,15 @@ def brew(base, steps):
 
 ingredients = {
 	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
-	'blood' : Ingredient("blood", {'D':1, 'E':1, 'H':1, 'L':1}, base=True),
+	'blood' : Ingredient("blood", {'D':2, 'E':2, 'G':1, 'H':1}, base=True),
+	'bone' : Ingredient("bone", {'A':1, 'E':1}, crushed="crushed bone"),
 	'crushed bone' : Ingredient("crushed bone", {'A':1, 'E':1, 'M':1}),
-	'drake thistle' : Ingredient("drake thistle", {'C':1, 'E':1, 'G':1}),
-	'milkweed' : Ingredient("milkweed", {'B':1, 'C':1, 'F':1})
+	'drake thistle' : Ingredient("drake thistle", {'C':1, 'E':1, 'G':1, 'H':2}),
+	'milkweed' : Ingredient("milkweed", {'C':1, 'F':1, 'H':2, 'O':1})
 }
 
 if __name__=='__main__':
 	for i in ingredients:
-		print(i, ': ')
+		print('~', i, '~')
 		ingredients[i].printeffects()
 		print('-'*12)

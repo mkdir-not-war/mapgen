@@ -20,10 +20,11 @@ class Effect():
 		return result
 
 alleffects = {
-	'hp' : Effect('hp', ['A', 'D', 'M']),
-	'stamina' : Effect('stamina', ['A', 'B', 'O']),
-	'speed' : Effect('speed', ['C', 'O', 'S']),
-	'defense' : Effect('defense', ['A', 'M', 'T']),
-	'spdefense' : Effect('spdefense', ['E', 'H', 'N'])
+	'+hp' : Effect('+hp', ['A', 'D', 'M']),
+	'+-hp' : Effect('-hp', ['E', 'H', 'P']),
+	'+stamina' : Effect('+stamina', ['A', 'B', 'O']),
+	'+speed' : Effect('+speed', ['C', 'O', 'S']),
+	'+defense' : Effect('+defense', ['A', 'M', 'T']),
+	'+spdefense' : Effect('+spdefense', ['E', 'G', 'N'])
 }
 	
