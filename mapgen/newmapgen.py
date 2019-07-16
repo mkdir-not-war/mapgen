@@ -280,7 +280,7 @@ class Player():
 
 def main():    
     gamemap = None
-    biomename = 'MEDROOM_MEDFOREST_SMLWATER'
+    biomename = 'LRGROOM_LRGFOREST_LRGWATER'
     width, height, floor = (45, 40, 0)
     boolchoice = [True, False]
     player = Player()
