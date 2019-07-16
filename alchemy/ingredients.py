@@ -1,7 +1,8 @@
 from numpy import dot
 from operator import itemgetter
 import compounds
-from effects import alleffects, effectvector
+from effects import alleffects
+from string import ascii_uppercase as compound_names
 
 def squaredlen(vec):
 	result = 0
@@ -9,14 +10,19 @@ def squaredlen(vec):
 		result += d ** 2
 	return result
 
-def angle_similarity(target, vecs):
+def effect_ingredient_similarity(target, size):
 	square_cos = {}
 	sqlen_target = squaredlen(target)
-	for v in vecs:
-		dotprod = dot(v, target)
-		value = (dotprod * dotprod) / (squaredlen(v) * sqlen_target)
-		square_cos[v] = value
-	return sorted(square_cos.items(), key=itemgetter(1), reverse=True)
+	for e in alleffects.values():
+		effect_vector = tuple(e.vector)
+		dotprod = dot(effect_vector, target)
+		value = (dotprod * dotprod) / \
+			(squaredlen(effect_vector) * sqlen_target)
+		square_cos[value] = e
+
+	scores = sorted(square_cos, reverse=True)
+	effects = [square_cos[s] for s in scores]
+	return scores[:size], effects[:size]
 
 def potency(compounds, signature):
 	# mask out signature from compounds
@@ -34,18 +40,22 @@ class Ingredient():
 		self.effects = self.calculateeffects()
 
 	def calculateeffects(self):
-		result = [] # [(effect, potency), ...]
-		compound_vector = [self.compounds[i] for i in sorted(self.compounds)]
-		effect_vectors = [tuple(e.vector) for e in alleffects]
-		effects_by_similarity = angle_similarity(
-			tuple(compound_vector), effect_vectors)
-		for e in effects_by_similarity:
-
-			result.append()
+		result = {} # [(effect, potency), ...]
+		compound_vector = [self.compounds[i] 
+							if i in self.compounds.keys() else 0 
+							for i in list(compound_names)]	
+		scores, effects = effect_ingredient_similarity(
+			tuple(compound_vector), 3)
+		for e_index in range(len(effects)):
+			effect = effects[e_index]
+			compound_potency = potency(self.compounds, effect.signature)
+			effect_potency = 10.0 * (compound_potency-1) + \
+				10.0 * scores[e_index]
+			result[effect.stat] = [effect, effect_potency]
 		return result
 
 	def printeffects(self):
-		for effect, potency in self.effects:
+		for effect, potency in self.effects.values():
 			print("%s: %s" % (effect.stat, str(potency)))
 
 # base = Ingredient
@@ -55,8 +65,16 @@ def brew(base, steps):
 	result = Ingredient("potion", compounds, base=True)
 	return result
 
-water = Ingredient("water", {}, base=True)
-blood = Ingredient("blood", {}, base=True)
-troll_bone = Ingredient("troll bone", {})
-dragon_thistle = Ingredient("dragon thistle", {})
-milk_weed = Ingredient("milk weed", {})
+ingredients = {
+	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
+	'blood' : Ingredient("blood", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
+	'crushed bone' : Ingredient("crushed bone", {'A':1, 'B':1, 'C':1, 'D':1}),
+	'drake thistle' : Ingredient("drake thistle", {'A':1, 'B':1, 'C':1, 'D':1}),
+	'milkweed' : Ingredient("milkweed", {'A':1, 'B':1, 'C':1, 'D':1})
+}
+
+if __name__=='__main__':
+	for i in ingredients:
+		print(i, ': ')
+		ingredients[i].printeffects()
+		print('-'*12)

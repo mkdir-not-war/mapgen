@@ -15,13 +15,14 @@ class Effect():
 		self.signature = signature
 		self.vector = self.effectvector()
 
-	def effectvector():
+	def effectvector(self):
 		result = [1 if i in self.signature else 0 for i in compound_names]
 		return result
 
-alleffects = [
-	Effect('hp', ['A', 'D', 'M']),
-	Effect('stamina', ['A', 'B', 'O']),
-	Effect('speed', ['C', 'O', 'S']),
-	Effect('defense', ['A', 'M', 'T'])
-]
+alleffects = {
+	'hp' : Effect('hp', ['A', 'D', 'M']),
+	'stamina' : Effect('stamina', ['A', 'B', 'O']),
+	'speed' : Effect('speed', ['C', 'O', 'S']),
+	'defense' : Effect('defense', ['A', 'M', 'T'])
+}
+	

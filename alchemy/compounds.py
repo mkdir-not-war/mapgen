@@ -14,10 +14,10 @@ class Compound():
 			warm_reactions = {}
 		if (hot_reactions is None):
 			hot_reactions = {}
-		self.cold_reactions
-		self.warm_reactions
-		self.hot_reactions
-		self.reactivity
+		self.cold_reactions = cold_reactions
+		self.warm_reactions = warm_reactions
+		self.hot_reactions = hot_reactions
+		self.reactivity = reactivity
 		self.tolerance = tolerance
 		self.max_temp = max_temp
 
