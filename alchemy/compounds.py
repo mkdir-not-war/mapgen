@@ -1,12 +1,13 @@
 
 class Compound():
 	def __init__(self, 
-		reactivity,
-		temp_range,
-		tolerance,
+		reactivity, # performs reactions before compounds of lower reactivity
+		max_temp, # low = 1-2, mid = 3-4, high = 5-6; start at 3?
+		tolerance, # steps after which being >max temp causes amount to go to 0
 		cold_reactions=None, 
 		warm_reactions=None, 
 		hot_reactions=None):
+
 		if (cold_reactions is None):
 			cold_reactions = {}
 		if (warm_reactions is None):
@@ -18,39 +19,39 @@ class Compound():
 		self.hot_reactions
 		self.reactivity
 		self.tolerance = tolerance
-		self.min_temp, self.max_temp = temp_range
+		self.max_temp = max_temp
 
-# make one compound for each letter of the greek alphabet (24 letters)
-
-# common in nature (10)
-alphanine = None
-betanine = None
-gammanine = None
-deltanine = None
-epsilonine = None
-zetanine = None
-etanine = None
-thetanine = None
-iotanine = None
-kappanine = None
+# common in nature (12)
+A = None
+B = None
+C = None
+D = None
+E = None
+F = None
+G = None
+H = None
+I = None
+J = None
+K = None
+L = None
 
 # rare in nature (6)
-lambdanine = None
-munine = None
-nunine = None
-xinine = None
-omicronine = None
-pinine = None
+M = None
+N = None
+O = None
+P = None
+Q = None
+R = None
 
 # synthetic (6)
-rhonine = None
-sigmanine = None
-taunine = None
-upsilonine = None
-phinine = None
-chinine = None
+S = None
+T = None
+U = None
+V = None
+W = None
+X = None
 
 # synthetic and inert (2)
 # no effect has these, they just worsen potency
-psinine = None
-omeganine = None
+Y = Compound(-1, 4, 2) # no reactivity, can degrade at high temp
+Z = Compound(-1, 6, 10) # no reactivity, does not degrade
