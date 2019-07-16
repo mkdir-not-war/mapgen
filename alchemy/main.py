@@ -1,42 +1,6 @@
-from numpy import dot
-from operator import itemgetter
-
-class Potion():
-	def __init__(self):
-		self.effects = {} # <effected stat> : <value/change>
-
-	def printpot(self):
-		for effect in self.effects:
-			print("%s: %s" % (effect, self.effects[effect]))
-
-# base = Ingredient
-# steps = [(<action>, <ingredient>/None)]
-def brew(base, steps):
-	result = Potions()
-	return result
-
-class Compound():
-	def __init__(self):
-		pass
-
-class Ingredient():
-	def __init__(self):
-		pass
-
-def squaredlen(vec):
-	result = 0
-	for d in vec:
-		result += d ** 2
-	return result
-
-def vectorsbyclosestangle(target, vecs):
-	square_cos = {}
-	sqlen_target = squaredlen(target)
-	for v in vecs:
-		dotprod = dot(v, target)
-		value = (dotprod * dotprod) / (squaredlen(v) * sqlen_target)
-		square_cos[v] = value
-	return max(square_cos.items(), key=itemgetter(1))
+import compounds
+import effects
+import ingredients
 
 def parseinput(userinput):
 	if userinput == 'help':
@@ -46,6 +10,7 @@ def parseinput(userinput):
 
 def main():
 	potions = []
+	print(vectorsbyclosestangle([10, 10], ([9, 10], [1, 1])))
 	while(1):
 		userinput = input('>> ')
 		parseinput(userinput)
