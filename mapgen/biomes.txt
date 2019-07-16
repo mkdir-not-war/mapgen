@@ -1,0 +1,68 @@
+{
+    "MEDROOM_MEDFOREST_SMLWATER": {
+        "percentwalls" : 0.34,
+        "wallscalemod" : 0.04,
+        "wallsize" : 0.9,
+        "percentwater" : 0.006,
+        "lakesize" : 0.7,
+        "percenttrees" : 0.009,
+        "forestsize" : 0.62,
+        "gens" : 3,
+        "monsterspecies" : {
+            "0" : "TROLLS",
+            "1" : "ORCS",
+            "2" : "ORCS",
+            "3" : "ORCS",
+            "4" : "ORCS",
+            "5" : "ORCS",
+            "6" : "ORCS",
+            "7" : "ORCS",
+            "8" : "ORCS",
+            "9" : "ORCS"
+        }
+    },
+    "SMLROOM_MEDFOREST_MEDWATER": {
+        "percentwalls" : 0.42,
+        "wallscalemod" : 0.04,
+        "wallsize" : 0.86,
+        "percentwater" : 0.02,
+        "lakesize" : 0.2,
+        "percenttrees" : 0.01,
+        "forestsize" : 0.6,
+        "gens" : 4,
+        "monsterspecies" : {
+            "0" : "TROLLS",
+            "1" : "ORCS",
+            "2" : "ORCS",
+            "3" : "ORCS",
+            "4" : "ORCS",
+            "5" : "ORCS",
+            "6" : "ORCS",
+            "7" : "ORCS",
+            "8" : "ORCS",
+            "9" : "ORCS"
+        }
+    },
+    "LRGROOM_LRGFOREST_LRGWATER": {
+        "percentwalls" : 0.33,
+        "wallscalemod" : 0.04,
+        "wallsize" : 0.85,
+        "percentwater" : 0.5,
+        "lakesize" : 0.6,
+        "percenttrees" : 0.007,
+        "forestsize" : 0.62,
+        "gens" : 3,
+        "monsterspecies" : {
+            "0" : "TROLLS",
+            "1" : "ORCS",
+            "2" : "ORCS",
+            "3" : "ORCS",
+            "4" : "ORCS",
+            "5" : "ORCS",
+            "6" : "ORCS",
+            "7" : "ORCS",
+            "8" : "ORCS",
+            "9" : "ORCS"
+        }
+    }
+}
