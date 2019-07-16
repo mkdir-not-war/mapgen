@@ -18,10 +18,19 @@ def effect_ingredient_similarity(target, size):
 		dotprod = dot(effect_vector, target)
 		value = (dotprod * dotprod) / \
 			(squaredlen(effect_vector) * sqlen_target)
-		square_cos[value] = e
+		if (not value in square_cos):
+			square_cos[value] = [e]
+		else:
+			square_cos[value].append(e)
 
-	scores = sorted(square_cos, reverse=True)
-	effects = [square_cos[s] for s in scores]
+	scores_nodup = sorted(square_cos, reverse=True)
+	scores = []
+	for s in scores_nodup:
+		for i in range(len(square_cos[s])):
+			scores.append(s)
+	effects = []
+	for s in scores_nodup:
+		effects.extend(square_cos[s])
 	return scores[:size], effects[:size]
 
 def potency(compounds, signature):
@@ -31,6 +40,8 @@ def potency(compounds, signature):
 		if c in signature:
 			values.append(compounds[c])
 	# find minimum value among masked compounds
+	if not values:
+		return 0
 	return min(values)
 
 class Ingredient():
@@ -45,13 +56,14 @@ class Ingredient():
 							if i in self.compounds.keys() else 0 
 							for i in list(compound_names)]	
 		scores, effects = effect_ingredient_similarity(
-			tuple(compound_vector), 3)
+			tuple(compound_vector), 4)
 		for e_index in range(len(effects)):
 			effect = effects[e_index]
 			compound_potency = potency(self.compounds, effect.signature)
-			effect_potency = 10.0 * (compound_potency-1) + \
-				10.0 * scores[e_index]
+			effect_potency = int(max((10.0 * (compound_potency) * \
+				scores[e_index]), 0))
 			result[effect.stat] = [effect, effect_potency]
+
 		return result
 
 	def printeffects(self):
@@ -67,10 +79,10 @@ def brew(base, steps):
 
 ingredients = {
 	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
-	'blood' : Ingredient("blood", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
-	'crushed bone' : Ingredient("crushed bone", {'A':1, 'B':1, 'C':1, 'D':1}),
-	'drake thistle' : Ingredient("drake thistle", {'A':1, 'B':1, 'C':1, 'D':1}),
-	'milkweed' : Ingredient("milkweed", {'A':1, 'B':1, 'C':1, 'D':1})
+	'blood' : Ingredient("blood", {'D':1, 'E':1, 'H':1, 'L':1}, base=True),
+	'crushed bone' : Ingredient("crushed bone", {'A':1, 'E':1, 'M':1}),
+	'drake thistle' : Ingredient("drake thistle", {'C':1, 'E':1, 'G':1}),
+	'milkweed' : Ingredient("milkweed", {'B':1, 'C':1, 'F':1})
 }
 
 if __name__=='__main__':
