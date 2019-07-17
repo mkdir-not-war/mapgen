@@ -48,24 +48,28 @@ class Ingredient():
 	def __init__(self, name, compounds, crushed=None, base=False):
 		self.name = name
 		self.compounds = compounds.copy() # {name : amount}
-		self.effects = self.calculateeffects()
+		self.effects = self.calculateeffects(compounds)
 		self.base = base
 
 		if crushed is None:
 			crushed = self.name
 		self.crushed = crushed
 
-	def calculateeffects(self):
+		if len(name) >= 6 and name[-6:] == "potion":
+			self.name = self.namepotion(name)
+
+
+	def calculateeffects(self, compounds):
 		max_effects_per_ingredient = 3
 		result = {} # [(effect, potency), ...]
-		compound_vector = [self.compounds[i] 
-							if i in self.compounds.keys() else 0 
+		compound_vector = [compounds[i] 
+							if i in compounds.keys() else 0 
 							for i in list(compound_names)]	
 		scores, effects = effect_ingredient_similarity(
 			tuple(compound_vector), max_effects_per_ingredient)
 		for e_index in range(len(effects)):
 			effect = effects[e_index]
-			compound_potency = potency(self.compounds, effect.signature)
+			compound_potency = potency(compounds, effect.signature)
 			effect_potency = int(max((10.0 * (compound_potency) * \
 				scores[e_index]), 0))
 			if (effect.effecttype == EffectType.NEGATIVE):
@@ -80,6 +84,38 @@ class Ingredient():
 					result[effect.stat] = [effect, effect_potency]
 		return result
 
+	def namepotion(self, basename):
+		effectslist = sorted(
+			list(self.effects.items()),
+			key=lambda e: e[1][1],
+			reverse=True)
+		if (len(effectslist) == 0):
+			return 'inert potion of %s' % basename[:-7]
+		max_pos_effects = []
+		min_neg_effects = []
+		max_potency = 0
+		min_potency = 0
+		for e in effectslist:
+			potency = e[1][1]
+			if potency > max_potency:
+				max_potency = potency
+				max_pos_effects = [e[0]]
+			elif potency == max_potency:
+				max_pos_effects.append(e[0])
+			if potency < min_potency:
+				min_potency = potency
+				min_neg_effects = [e[0]]
+			elif potency == min_potency:
+				min_neg_effects.append(e[0])
+
+		if (abs(min_potency) > max_potency):
+			basename = basename[:-6] + 'poison'
+			name = '%s of deplete %s' % (basename, ' and '.join(min_neg_effects))
+		else:
+			name = '%s of augment %s' % (basename, ' and '.join(max_pos_effects))
+
+		return name
+
 	def crush(self):
 		result = ingredients[self.crushed]
 		return result
@@ -91,15 +127,15 @@ class Ingredient():
 # base = Ingredient
 # steps = [(<action>, <ingredient>/None)]
 def brew(base, steps):
-	compounds = {}
-	result = Ingredient("potion", compounds, base=True)
+	compounds = base.effects.copy()
+	result = Ingredient("%s potion" % base.name, compounds, base=True)
 	return result
 
 ingredients = {
 	# bases
 	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
 	'blood' : Ingredient("blood", {'D':2, 'E':2, 'G':1, 'H':1}, base=True),
-	'slime' : Ingredient("slime", {'F':1, 'H':2, 'K':2, 'N':1}, base=True),
+	'slime' : Ingredient("slime", {'H':1, 'I':1, 'K':2, 'S':1}, base=True),
 	'ectoplasm' : Ingredient("ectoplasm", {'H':1, 'I':1, 'L':2, 'N': 2}, base=True),
 	# from corpses
 	'bone' : Ingredient("bone", {'A':1, 'E':1}, crushed="crushed bone"),
@@ -111,8 +147,16 @@ ingredients = {
 	'milkweed' : Ingredient("milkweed", {'C':1, 'F':1, 'H':2, 'O':1})
 }
 
+bases = {k:v for (k,v) in ingredients.items() if v.base}
+
 if __name__=='__main__':
+	'''
 	for i in ingredients:
 		print('~', i, '~')
 		ingredients[i].printeffects()
 		print('-'*12)
+	'''
+
+	test_pot = Ingredient('test potion', {'F':2, 'B':3, 'Q':2, 'X':1}, base=True)
+	print(test_pot.name)
+	test_pot.printeffects()

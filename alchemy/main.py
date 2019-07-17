@@ -1,12 +1,13 @@
-import compounds
-import effects
-import ingredients
+from ingredients import ingredients, bases, brew
 
 '''
 actions:
 	* heat (+1 heat level, -1 after 3 turns)
 	* add
 	* crush + add
+
+NOTE: when two compounds react, the result's amount is double the minimum
+of the amounts of the two compounds, with the greater amount having leftover
 '''
 
 def parseinput(userinput):
