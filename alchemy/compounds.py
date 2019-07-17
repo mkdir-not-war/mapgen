@@ -1,3 +1,15 @@
+from enum import Enum
+
+heatlevels = {
+	0 : 'cold',
+	1 : 'cold',
+	2 : 'warm',
+	3 : 'warm', 
+	4 : 'hot',
+	'cold' : [0, 1],
+	'warm' : [2, 3],
+	'hot' : [4]
+}
 
 class Compound():
 	def __init__(self, 
@@ -54,9 +66,27 @@ allcompounds = {
 		cold_reactions={},
 		warm_reactions={'H':'Z'}, 
 		hot_reactions={}),
-	'E' : None,
-	'F' : None,
-	'G' : None,
+	'E' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'F' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'G' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 	# -hp; boils off; makes inert at warm temps with common stuff
 	'H' : Compound(
 		reactivity=2, 
@@ -65,9 +95,27 @@ allcompounds = {
 		cold_reactions={},
 		warm_reactions={'A':'Z', 'B':'Z', 'D':'Z'}, 
 		hot_reactions={'N':'V', 'P':'V', 'Q':'W'}),
-	'I' : None,
-	'J' : None,
-	'K' : None,
+	'I' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'J' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'K' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 	# invis; boils off really early and quickly
 	'L' : Compound(
 		reactivity=2, 
@@ -79,7 +127,13 @@ allcompounds = {
 
 	### rare in nature (6) ###
 
-	'M' : None,
+	'M' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 	# in ectoplasm with L (invis); react with something synthetic to isolate L
 	'N' : Compound(
 		reactivity=1, 
@@ -88,7 +142,13 @@ allcompounds = {
 		cold_reactions={},
 		warm_reactions={}, 
 		hot_reactions={'H':'V'}),
-	'O' : None,
+	'O' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 	'P' : Compound(
 		reactivity=1, 
 		max_temp=3, 
@@ -103,17 +163,59 @@ allcompounds = {
 		cold_reactions={},
 		warm_reactions={}, 
 		hot_reactions={'H':'W'}),
-	'R' : None,
+	'R' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 
 	### synthetic (6) ###
 
-	'S' : None,
-	'T' : None,
-	'U' : None,
+	'S' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'T' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'U' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 	# invis, heat; reactions to create this are only hot (H + P/Q -> V)
-	'V' : None,
-	'W' : None,
-	'X' : None,
+	'V' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'W' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
+	'X' : Compound( ############################
+		reactivity=-1, 
+		max_temp=None, 
+		tolerance=None, 
+		cold_reactions={},
+		warm_reactions={}, 
+		hot_reactions={}),
 
 	### synthetic and inert (2) ###
 	### no effect has these, they just worsen potency ###

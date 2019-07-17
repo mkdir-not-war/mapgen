@@ -6,8 +6,6 @@ actions:
 	* add
 	* crush + add
 
-NOTE: when two compounds react, the result's amount is double the minimum
-of the amounts of the two compounds, with the greater amount having leftover
 '''
 
 class Alchemy():
@@ -17,14 +15,14 @@ class Alchemy():
 		self.base = None
 		self.steps = {}
 		for i in range(10):
-			self.steps[i] = ('wait', None)
+			self.steps[i] = ('wait', None, None)
 		self.possibleactions = ['add', 'crush and add', 'heat', 'wait']
 
 	def reset(self):
 		self.inputhandler = maininput
 		self.base = None
-		self.potions.clear()
-		self.ingredients.clear()
+		for i in range(10):
+			self.steps[i] = ('wait', None, None)
 
 def printsteps(alchemy):
 	print("STEPS: ")
@@ -32,14 +30,16 @@ def printsteps(alchemy):
 	for i in range(10):
 		action = alchemy.steps[i][0]
 		item = ''
+		amount = ''
 		if (not alchemy.steps[i][1] is None):
 			item = alchemy.steps[i][1]
-		print('\t', i+1, '\t', action, item)
+			amount = alchemy.steps[i][2]
+		print('\t', i+1, '\t', action, item, amount)
 	print('\t', '11', '\t', 'bottle it up!')
 
 def brewinput(userinput, alchemy):
 	if userinput == 'help':
-		print('ingredients | actions | ')
+		print('ingredients | actions | base | print | step N | brew | stop | quit')
 	elif userinput == 'quit':
 		exit(1)
 	elif userinput == 'stop':
@@ -53,7 +53,7 @@ def brewinput(userinput, alchemy):
 		for i in alchemy.possibleactions:
 			print('\t', i)
 	elif userinput == 'base':
-		baseinput = input('>> base: ')
+		baseinput = input('base: ')
 		if baseinput not in ingredients:
 			print("'%s' is not a viable base." % baseinput)
 			print("bases: %s" % [name for name in bases])
@@ -64,25 +64,31 @@ def brewinput(userinput, alchemy):
 	elif userinput[:4] == 'step':
 		splinput = userinput.split(' ')
 		if (len(splinput) == 2):
-			stepnum = splinput[1]
+			stepnum = int(splinput[1])
 			if (stepnum < 1 or stepnum > 11):
 				print("There is no step %s!" % stepnum)
 				return
 			elif (stepnum == 11):
 				print("Step 11 is to bottle the concoction!")
 				return
+			stepnum = stepnum-1
 			actioninput = input("action: ")
 			if not actioninput in alchemy.possibleactions:
 				print("'%s' is not a viable action." % actioninput)
 				return
 			if actioninput in ['wait', 'heat']:
-				alchemy.steps[stepnum] = (actioninput, None)
+				alchemy.steps[stepnum] = (actioninput, None, None)
 				return
 			iteminput = input("what do you want to %s?: " % actioninput)
 			if not iteminput in ingredients:
 				print("'%s' is not a viable ingredient." % iteminput)
 				return
-			alchemy.steps[stepnum] = (actioninput, iteminput)
+			amountinput = int(input("amount of %s: " % iteminput))
+			if amountinput <= 0:
+				print("You cannot %s %s amount of %s." % (
+					actioninput, amountinput, iteminput))
+				return
+			alchemy.steps[stepnum] = (actioninput, iteminput, amountinput)
 
 	elif userinput == 'brew':
 		if (not alchemy.base is None):
@@ -92,6 +98,7 @@ def brewinput(userinput, alchemy):
 			print(potion.name)
 			potion.printeffects()
 			alchemy.inputhandler = maininput
+			alchemy.reset()
 		else:
 			print('You need a base before you brew the potion.')
 	else:

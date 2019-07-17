@@ -127,53 +127,108 @@ class Ingredient():
 # base = Ingredient
 # steps = [(<action>, <ingredient>/None)]
 def brew(base, steps):
-	compoundlist = base.compounds.copy()
+	compoundsdict = base.compounds.copy()
 
-	heatlevel = 0
+	max_heat = compounds.heatlevels['hot'][0] # minimum heat = 0
 	stepsperheat = 3
+
 	heattimer = 0
-	turnsabovetemp = [0] * 4
+	heatlevel = 0
+	turnsabovetemp = [0] * (max_heat)
 
 	for stepnum in range(10):
 		step = steps[stepnum]
-		action, item = step
+		action, item, amount = step
 		# 1) destroy compounds that hit their tolerance
 		destroyedcompounds = []
-		for c in compoundlist:
+		for c in compoundsdict:
 			compound = compounds.allcompounds[c]
 			if not compound.max_temp is None:
 				if turnsabovetemp[compound.max_temp] >= 2:
 					destroyedcompounds.append(c)
 		for c in destroyedcompounds:
-			del compoundlist[c]
+			del compoundsdict[c]
 
 		# 2) apply add and crush actions, if applicable
+		if (action in ['add', 'crush and add']):
+			itemingredient = ingredients[item]
+			if action == 'crush and add':
+				itemingredient = itemingredient.crush()
+			for compound in itemingredient.compounds:
+				amt = itemingredient.compounds[compound] * amount
+				if (compound in compoundsdict):
+					compoundsdict[compound] += amt
+				else:
+					compoundsdict[compound] = amt
 
 		# 3) resolve any reactions in order of reactivity
+		compoundlist = sorted(
+			list(compoundsdict.items()),
+			key=lambda c: compounds.allcompounds[c[0]].reactivity,
+			reverse=True)
+		compoundlist = [c for c in compoundlist \
+			if compounds.allcompounds[c[0]].reactivity >= 0]
+		'''
+		NOTE: when two compounds react, 
+		the result's amount is double the minimum
+		of the amounts of the two compounds, 
+		with the greater amount having leftover
+		'''
+		reacting = []
+		for compound, amount in compoundlist:
+			heattier = compounds.heatlevels[heatlevel]
+			reactions = None
+			if heattier == 'cold':
+				reactions = compounds.allcompounds[compound].cold_reactions
+			elif heattier == 'warm':
+				reactions = compounds.allcompounds[compound].warm_reactions
+			elif heattier == 'hot':
+				reactions = compounds.allcompounds[compound].hot_reactions
+			for r in reactions:
+				if r in compoundsdict:
+					reacting.append((compound, r, reactions[r],
+						min(amount, compoundsdict[r])))
+		new_compounds = {}
+		for r1, r2, result, amount in reacting:
+			if (r1 in compoundsdict and r2 in compoundsdict):
+				if (compoundsdict[r1] > compoundsdict[r2]):
+					del compoundsdict[r2]
+					compoundsdict[r1] -= amount
+				elif (compoundsdict[r1] < compoundsdict[r2]):
+					del compoundsdict[r1]
+					compoundsdict[r2] -= amount
+				else:
+					# equal amounts, delete both
+					del compoundsdict[r1]
+					del compoundsdict[r2]
+				new_compounds[result] = amount * 2
+		compoundsdict.update(new_compounds)
+
 
 		# 4) update heat level and turns above temp
-		for i in range(heatlevel+1):
+		for i in range(0, min(heatlevel, max_heat)):
 			turnsabovetemp[i] += 1
+		for i in range(heatlevel+1, max_heat):
+			turnsabovetemp[i] = 0
 		if (action == 'heat'):
-			heatlevel += 1
+			if (heatlevel < max_heat):
+				heatlevel += 1
 			heattimer = stepsperheat
 		heattimer -= 1
 		if (heattimer == 0):
-			heatlevel -= 1
+			if (heatlevel > 0):
+				heatlevel -= 1
 			heattimer = stepsperheat
 
-	result = Ingredient("%s potion" % base.name, compoundlist, base=True)
+	result = Ingredient("%s potion" % base.name, compoundsdict, base=True)
 	return result
 
 # should this even be a possible action?
 def distill(compoundlist):
 	new_compounds = {}
 	for c in compoundlist:
-		mult = 1
-		######################################## get rid of this check ###
-		if (not compounds.allcompounds[c] is None):
-			print("hello") ############################# test this more ##
-			mult = (20 / (compounds.allcompounds[c].reactivity + 2))
+		# reactivity -1 -> 0: remove the compound
+		mult = (compounds.allcompounds[c].reactivity + 1)
 		new_compounds[c] = compoundlist[c] * mult
 	return new_compounds
 
