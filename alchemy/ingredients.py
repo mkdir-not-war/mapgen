@@ -49,16 +49,20 @@ class Ingredient():
 		self.name = name
 		self.compounds = compounds.copy() # {name : amount}
 		self.effects = self.calculateeffects()
-		self.crushed = crushed
 		self.base = base
 
+		if crushed is None:
+			crushed = self.name
+		self.crushed = crushed
+
 	def calculateeffects(self):
+		effects_per_ingredient = 3
 		result = {} # [(effect, potency), ...]
 		compound_vector = [self.compounds[i] 
 							if i in self.compounds.keys() else 0 
 							for i in list(compound_names)]	
 		scores, effects = effect_ingredient_similarity(
-			tuple(compound_vector), 3)
+			tuple(compound_vector), effects_per_ingredient)
 		for e_index in range(len(effects)):
 			effect = effects[e_index]
 			compound_potency = potency(self.compounds, effect.signature)
@@ -85,10 +89,17 @@ def brew(base, steps):
 	return result
 
 ingredients = {
+	# bases
 	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
 	'blood' : Ingredient("blood", {'D':2, 'E':2, 'G':1, 'H':1}, base=True),
+	'slime' : Ingredient("slime", {'F':1, 'H':2, 'K':2, 'N':1}, base=True),
+	'ectoplasm' : Ingredient("ectoplasm", {'H':1, 'I':1, 'L':2, 'N': 2}, base=True),
+	# from corpses
 	'bone' : Ingredient("bone", {'A':1, 'E':1}, crushed="crushed bone"),
 	'crushed bone' : Ingredient("crushed bone", {'A':1, 'E':1, 'M':1}),
+	'troll eye' : Ingredient("troll eye", {'F':2, 'H':1, 'I':1, 'K':1}, crushed="slime"), 
+	'orc ear' : Ingredient("orc ear", {'F':1, 'G':1, 'J':1}, crushed="blood"),
+	# plants
 	'drake thistle' : Ingredient("drake thistle", {'C':1, 'E':1, 'G':1, 'H':2}),
 	'milkweed' : Ingredient("milkweed", {'C':1, 'F':1, 'H':2, 'O':1})
 }

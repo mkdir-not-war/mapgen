@@ -2,6 +2,13 @@ import compounds
 import effects
 import ingredients
 
+'''
+actions:
+	- heat (+1 heat level, -1 after 3 turns)
+	- add
+	- crush + add
+'''
+
 def parseinput(userinput):
 	if userinput == 'help':
 		print('help!')
