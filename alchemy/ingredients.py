@@ -1,7 +1,7 @@
 from numpy import dot
 from operator import itemgetter
 import compounds
-from effects import alleffects
+from effects import alleffects, EffectType
 from string import ascii_uppercase as compound_names
 
 def squaredlen(vec):
@@ -56,21 +56,28 @@ class Ingredient():
 		self.crushed = crushed
 
 	def calculateeffects(self):
-		effects_per_ingredient = 3
+		max_effects_per_ingredient = 3
 		result = {} # [(effect, potency), ...]
 		compound_vector = [self.compounds[i] 
 							if i in self.compounds.keys() else 0 
 							for i in list(compound_names)]	
 		scores, effects = effect_ingredient_similarity(
-			tuple(compound_vector), effects_per_ingredient)
+			tuple(compound_vector), max_effects_per_ingredient)
 		for e_index in range(len(effects)):
 			effect = effects[e_index]
 			compound_potency = potency(self.compounds, effect.signature)
 			effect_potency = int(max((10.0 * (compound_potency) * \
 				scores[e_index]), 0))
-			if (effect_potency > 0):
-				result[effect.stat] = [effect, effect_potency]
-
+			if (effect.effecttype == EffectType.NEGATIVE):
+				effect_potency *= -1
+			# sum up negative and positive effects
+			if (effect_potency != 0):
+				if (effect.stat in result):
+					result[effect.stat][1] += effect_potency
+					if (result[effect.stat][1]) == 0:
+						del result[effect.stat]
+				else:
+					result[effect.stat] = [effect, effect_potency]
 		return result
 
 	def crush(self):

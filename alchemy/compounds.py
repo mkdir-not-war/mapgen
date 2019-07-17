@@ -23,6 +23,8 @@ class Compound():
 
 
 allcompounds = {
+	### common in nature (12) ###
+
 	# +hp; tolerant at high; reacts with a lot
 	'A' : Compound(
 		reactivity=4, 
@@ -62,7 +64,7 @@ allcompounds = {
 		tolerance=3, 
 		cold_reactions={},
 		warm_reactions={'A':'Z', 'B':'Z', 'D':'Z'}, 
-		hot_reactions={'N':'V', 'P':'V', 'Q':'V'}),
+		hot_reactions={'N':'V', 'P':'V', 'Q':'W'}),
 	'I' : None,
 	'J' : None,
 	'K' : None,
@@ -100,7 +102,7 @@ allcompounds = {
 		tolerance=5,
 		cold_reactions={},
 		warm_reactions={}, 
-		hot_reactions={'H':'V'}),
+		hot_reactions={'H':'W'}),
 	'R' : None,
 
 	### synthetic (6) ###
@@ -127,11 +129,10 @@ allcompounds = {
 		max_temp=None, 
 		tolerance=None)
 }
-### common in nature (12) ###
-
 
 
 def check_compound_reactions():
+	offenders = []
 	for c in allcompounds:
 		# while not finished...
 		if (allcompounds[c] is None):
@@ -144,25 +145,28 @@ def check_compound_reactions():
 			if (c in allcompounds[cr].cold_reactions):
 				pairresult = allcompounds[cr].cold_reactions[c]
 			if (pairresult is None or result != pairresult):
-				print('%s + %s -> %s' % (c, cr, result))
-				return False
+				offenders.append('%s + %s -> %s' % (c, cr, result))
 		for wr in compound_info.warm_reactions:
 			result = compound_info.warm_reactions[wr]
 			pairresult = None
 			if (c in allcompounds[wr].warm_reactions):
 				pairresult = allcompounds[wr].warm_reactions[c]
 			if (pairresult is None or result != pairresult):
-				print('%s + %s -> %s' % (c, wr, result))
-				return False
+				offenders.append('%s + %s -> %s' % (c, wr, result))
 		for hr in compound_info.hot_reactions:
 			result = compound_info.hot_reactions[hr]
 			pairresult = None
 			if (c in allcompounds[hr].hot_reactions):
 				pairresult = allcompounds[hr].hot_reactions[c]
 			if (pairresult is None or result != pairresult):
-				print('%s + %s -> %s' % (c, hr, result))
+				offenders.append('%s + %s -> %s' % (c, hr, result))
 				return False
-	return True
+	if (len(offenders) > 0):
+		for o in offenders:
+			print(o)
+		return False
+	else:
+		return True
 
 if __name__=='__main__':
 	print(check_compound_reactions())
