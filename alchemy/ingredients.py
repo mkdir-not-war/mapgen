@@ -127,21 +127,82 @@ class Ingredient():
 # base = Ingredient
 # steps = [(<action>, <ingredient>/None)]
 def brew(base, steps):
-	compounds = base.effects.copy()
-	result = Ingredient("%s potion" % base.name, compounds, base=True)
+	compoundlist = base.compounds.copy()
+
+	heatlevel = 0
+	stepsperheat = 3
+	heattimer = 0
+	turnsabovetemp = [0] * 4
+
+	for stepnum in range(10):
+		step = steps[stepnum]
+		action, item = step
+		# 1) destroy compounds that hit their tolerance
+		destroyedcompounds = []
+		for c in compoundlist:
+			compound = compounds.allcompounds[c]
+			if not compound.max_temp is None:
+				if turnsabovetemp[compound.max_temp] >= 2:
+					destroyedcompounds.append(c)
+		for c in destroyedcompounds:
+			del compoundlist[c]
+
+		# 2) apply add and crush actions, if applicable
+
+		# 3) resolve any reactions in order of reactivity
+
+		# 4) update heat level and turns above temp
+		for i in range(heatlevel+1):
+			turnsabovetemp[i] += 1
+		if (action == 'heat'):
+			heatlevel += 1
+			heattimer = stepsperheat
+		heattimer -= 1
+		if (heattimer == 0):
+			heatlevel -= 1
+			heattimer = stepsperheat
+
+	result = Ingredient("%s potion" % base.name, compoundlist, base=True)
 	return result
+
+# should this even be a possible action?
+def distill(compoundlist):
+	new_compounds = {}
+	for c in compoundlist:
+		mult = 1
+		######################################## get rid of this check ###
+		if (not compounds.allcompounds[c] is None):
+			print("hello") ############################# test this more ##
+			mult = (20 / (compounds.allcompounds[c].reactivity + 2))
+		new_compounds[c] = compoundlist[c] * mult
+	return new_compounds
 
 ingredients = {
 	# bases
-	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, base=True),
-	'blood' : Ingredient("blood", {'D':2, 'E':2, 'G':1, 'H':1}, base=True),
-	'slime' : Ingredient("slime", {'H':1, 'I':1, 'K':2, 'S':1}, base=True),
-	'ectoplasm' : Ingredient("ectoplasm", {'H':1, 'I':1, 'L':2, 'N': 2}, base=True),
+	'water' : Ingredient("water", {'A':1, 'B':1, 'C':1, 'D':1}, 
+		base=True),
+	'blood' : Ingredient("blood", {'D':2, 'E':2, 'G':1, 'H':1}, 
+		base=True),
+	'slime' : Ingredient("slime", {'H':1, 'I':1, 'K':2, 'S':1}, 
+		base=True),
+	'ectoplasm' : Ingredient("ectoplasm", {'H':1, 'I':1, 'L':2, 'N': 2}, 
+		base=True),
 	# from corpses
-	'bone' : Ingredient("bone", {'A':1, 'E':1}, crushed="crushed bone"),
+	'bone' : Ingredient("bone", {'A':1, 'E':1}, 
+		crushed="crushed bone"),
 	'crushed bone' : Ingredient("crushed bone", {'A':1, 'E':1, 'M':1}),
-	'troll eye' : Ingredient("troll eye", {'F':2, 'H':1, 'I':1, 'K':1}, crushed="slime"), 
-	'orc ear' : Ingredient("orc ear", {'F':1, 'G':1, 'J':1}, crushed="blood"),
+	'troll eye' : Ingredient("troll eye", {'F':2, 'H':1, 'I':1, 'K':1}, 
+		crushed="slime"), 
+	'orc ear' : Ingredient("orc ear", {'F':1, 'G':1, 'J':1}, 
+		crushed="blood"),
+	'kobold tooth' : Ingredient("kobold tooth", {'A':1, 'C':2, 'E':2, 'H':1}, 
+		crushed="crushed bone"),
+	'dragon scale' : Ingredient("dragon scale", {'B':1, 'C':2, 'D':1, 'I':1}, 
+		crushed="powdered scale"),
+	'fish scale' : Ingredient("fish scale", {'B':2, 'I':2, 'J':1}, 
+		crushed="powdered scale"),
+	'powdered scale' : Ingredient("powdered scale", {'B':2, 'C':2, 'I':2}, 
+		crushed="blood"),
 	# plants
 	'drake thistle' : Ingredient("drake thistle", {'C':1, 'E':1, 'G':1, 'H':2}),
 	'milkweed' : Ingredient("milkweed", {'C':1, 'F':1, 'H':2, 'O':1})
@@ -149,14 +210,23 @@ ingredients = {
 
 bases = {k:v for (k,v) in ingredients.items() if v.base}
 
-if __name__=='__main__':
-	'''
+def printingredients():
 	for i in ingredients:
 		print('~', i, '~')
 		ingredients[i].printeffects()
 		print('-'*12)
-	'''
 
-	test_pot = Ingredient('test potion', {'F':2, 'B':3, 'Q':2, 'X':1}, base=True)
+def printtestpot():
+	pot_comp = {'A':2, 'C':4, 'E':4, 'H':2}
+	test_pot = Ingredient('test potion', pot_comp, base=True)
 	print(test_pot.name)
 	test_pot.printeffects()
+
+	test_pot.compounds = distill(test_pot.compounds)
+	test_pot.calculateeffects(test_pot.compounds)
+	print('distilled '+ test_pot.name)
+	test_pot.printeffects()
+
+if __name__=='__main__':
+	printtestpot()
+	#printingredients()

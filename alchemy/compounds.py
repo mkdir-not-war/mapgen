@@ -39,14 +39,14 @@ allcompounds = {
 		tolerance=6,
 		cold_reactions={'L':'Q'},
 		warm_reactions={'H':'Z', 'L':'A'}, 
-		hot_reactions={}),
+		hot_reactions={'C':'M'}),
 	'C' : Compound(
 		reactivity=4, 
 		max_temp=None, 
 		tolerance=None,
 		cold_reactions={'L':'Q'},
 		warm_reactions={}, 
-		hot_reactions={}),
+		hot_reactions={'B':'M'}),
 	'D' : Compound(
 		reactivity=4, 
 		max_temp=3, 
@@ -144,21 +144,21 @@ def check_compound_reactions():
 			pairresult = None
 			if (c in allcompounds[cr].cold_reactions):
 				pairresult = allcompounds[cr].cold_reactions[c]
-			if (pairresult is None or result != pairresult):
+			if (pairresult is None or result != pairresult or c == cr):
 				offenders.append('%s + %s -> %s' % (c, cr, result))
 		for wr in compound_info.warm_reactions:
 			result = compound_info.warm_reactions[wr]
 			pairresult = None
 			if (c in allcompounds[wr].warm_reactions):
 				pairresult = allcompounds[wr].warm_reactions[c]
-			if (pairresult is None or result != pairresult):
+			if (pairresult is None or result != pairresult or c == cr):
 				offenders.append('%s + %s -> %s' % (c, wr, result))
 		for hr in compound_info.hot_reactions:
 			result = compound_info.hot_reactions[hr]
 			pairresult = None
 			if (c in allcompounds[hr].hot_reactions):
 				pairresult = allcompounds[hr].hot_reactions[c]
-			if (pairresult is None or result != pairresult):
+			if (pairresult is None or result != pairresult or c == cr):
 				offenders.append('%s + %s -> %s' % (c, hr, result))
 				return False
 	if (len(offenders) > 0):

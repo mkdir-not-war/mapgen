@@ -53,7 +53,7 @@ alleffects = {
 		EffectType.NEGATIVE),
 	'-spdefense' : Effect('spdefense', 	['J', 'R', 'T'],
 		EffectType.NEGATIVE),
-	'-attack' : Effect('attack', 		['H', 'I', 'S'],
+	'-attack' : Effect('attack', 		['H', 'K', 'S'],
 		EffectType.NEGATIVE),
 	'-spattack' : Effect('spattack', 	['D', 'G', 'P'],
 		EffectType.NEGATIVE),
