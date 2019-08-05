@@ -1,5 +1,5 @@
-height = 8
-width = 18
+height = 20
+width = 40
 avg_dist = int((width + height) / 2)
 midpoint = (int(width/2), int(height/2))
 
