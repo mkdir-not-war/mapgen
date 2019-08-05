@@ -1,3 +1,4 @@
+import sys
 import tcod as libtcod
 from random import random, choice, randint, seed
 
@@ -143,6 +144,10 @@ def printworld(con):
 
 
 def main():
+	if len(sys.argv) > 1:
+		print("world seed: %d" % int(sys.argv[1]))
+		seed(int(sys.argv[1]))
+
 	libtcod.console_set_custom_font('arial10x10.png', 
 		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 	libtcod.console_init_root(screen_width, screen_height, 
