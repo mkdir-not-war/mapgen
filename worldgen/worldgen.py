@@ -7,7 +7,12 @@ colors = {
 	'tree': libtcod.Color(143, 181, 100),
 	'water': libtcod.desaturated_blue * libtcod.lighter_grey,
 	'polar': libtcod.lightest_blue * libtcod.white,
-	'black': libtcod.black
+	'black': libtcod.black,
+	'dark_ground': libtcod.Color(128, 75, 60),
+	'dark_mountain': libtcod.Color(64, 37, 30),
+	'dark_tree': libtcod.Color(101, 128, 70),
+	'dark_water': libtcod.Color(96, 103, 128),
+	'dark_polar': libtcod.lightest_grey
 }
 screen_width = 80 # /4 = 20
 screen_height = 50 # /4 ~= 12
@@ -23,21 +28,21 @@ elevationtiles = []
 worldtiles = []
 
 interval = (int)(map_height/6)
+#npolarcell = (int)(interval/2)
 npolarcell = interval
 nmidcell = interval*2
+equator = interval*3
 smidcell = map_height-interval*2
 spolarcell = map_height-interval
 
-NUMFAULTS = 28
+NUMFAULTS = 26
 SMALLRADIUS = 1
-BIGRADIUS = 10
+BIGRADIUS = 14
 FAULT_WIDTH = 2
 ELEVATION_GENS = 6
 ELEVATION_BUILD = 1.01
 ELEVATION_SPREAD = 0.23
 ELEVATION_EROSION = 0.004
-# 8, 20, 100, 2, 5, 1.0, 0.25, 0.18
-# 14, 4, 100, 3, 6, 1.0, 0.23, 0.004
 
 def adjacenttiles(x, y, diag=False):
 	result = []
@@ -47,6 +52,7 @@ def adjacenttiles(x, y, diag=False):
 	xminus = x-1
 	if (xminus < 0):
 		xminus = map_width-1
+
 	yplus = y+1
 	yminus = y-1
 	if (y == 0):
@@ -92,7 +98,7 @@ def generateelevation():
 	for gen in range(ELEVATION_GENS):
 		# add from faults
 		for y in list(range(map_height))[npolarcell:spolarcell]:
-			for x in range(map_width):
+			for x in list(range(map_width))[3:-3]:
 				for fault in faultlines:
 					if (abs((x-fault[0])**2 + (y-fault[1])**2 - \
 						fault[2]**2) <= FAULT_WIDTH**2):
@@ -119,7 +125,7 @@ def generatebiomes():
 		for x in range(map_width):
 			if (elevationtiles[x + map_width * y] >= 1):
 				worldtiles[x + map_width * y] = 'ground'
-			if (elevationtiles[x + map_width * y] >= 4):
+			if (elevationtiles[x + map_width * y] >= 3.5):
 				worldtiles[x + map_width * y] = 'mountain'
 			if (elevationtiles[x + map_width * y] >= 6):
 				worldtiles[x + map_width * y] = 'polar'
@@ -132,21 +138,13 @@ def printworld(con):
 				x+draw_offset_x, y+draw_offset_y, 
 				colors.get(worldtiles[x + map_width * y]), 
 				libtcod.BKGND_SET)
-			libtcod.console_set_char_background(
-				con, 
-				x+draw_offset_x+map_width, y+draw_offset_y, 
-				colors.get(worldtiles[x + map_width * y]), 
-				libtcod.BKGND_SET)
-			libtcod.console_set_char_background(
-				con, 
-				x+draw_offset_x-map_width, y+draw_offset_y, 
-				colors.get(worldtiles[x + map_width * y]), 
-				libtcod.BKGND_SET)
 	libtcod.console_blit(
 		con, 0, 0, screen_width, screen_height, 0, 0, 0)
 
 
 def main():
+	libtcod.console_set_custom_font('arial10x10.png', 
+		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 	libtcod.console_init_root(screen_width, screen_height, 
 		'libtcod tutorial revised', False, 
 		libtcod.RENDERER_SDL2, vsync=True)
