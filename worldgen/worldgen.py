@@ -199,24 +199,31 @@ def gettilesbytype(*tiletypes):
 	return result
 
 def getrainshadow(x, y, degrees, wind, mountains):
-	result = False
+	raindepth = 1
 
 	northbounds = degrees - degrees%30
 	southbounds = northbounds + 30
 	wx, wy = wind
 
+	#print(northbounds, southbounds, wx, wy, x, y)
+
 	# follow wind vector backwards to check for mountain
 	# stop when the wind cell ends, or when a mountain is found
 	px = x-wx
 	py = y-wy
-	while (py <= northbounds and py >= southbounds and result == False):
+	degrees = (int)((float)(py)/tilesperdegree)
+	while (degrees >= northbounds and degrees < southbounds):
 		if ((px, py) in mountains):
-			result = True
+			raindepth -= 2 # shadow tiles per mountain width
+		if (raindepth < 1):
+			return True
 		else:
 			px = px-wx
 			py = py-wy
+			degrees = (int)((float)(py)/tilesperdegree)
+			raindepth += 1
 
-	return result
+	return False
 
 def defaultwater():
 	global worldtiles
@@ -252,6 +259,20 @@ def raisemountains():
 	if (numpolars < NUM_POLARS):
 		return False
 
+def getcurrenttemp(degrees, coast):
+	return 'warm'
+
+def getonshorewind(wind, coast, dist2coast, rainshadow):
+	return False
+
+def setbiome(x, y, 
+	degrees, 
+	coast, dist2coast, currenttemp, 
+	rainshadow, onshorewind):
+
+	global worldtiles
+	worldtiles[x + map_width * y] = 'ground'
+
 def generatebiomes():
 	defaultwater()
 
@@ -262,7 +283,7 @@ def generatebiomes():
 
 	if (raisemountains() == False):
 		return False
-	mountains = gettilesbytype('mountain')
+	mountains = gettilesbytype('mountain', 'polar')
 
 	for y in range(map_height):
 		degrees = (int)((float)(y)/tilesperdegree)
@@ -272,7 +293,12 @@ def generatebiomes():
 				adjtiles = adjacenttiles(x, y, True)
 				coast, dist2coast = getnearestcoast(x, y)
 				rainshadow = getrainshadow(x, y, degrees, wind, mountains)
-
+				onshorewind = getonshorewind(wind, coast, dist2coast, rainshadow)
+				currenttemp = getcurrenttemp(degrees, coast)
+				setbiome(x, y, 
+					degrees, 
+					coast, dist2coast, currenttemp,
+					rainshadow, onshorewind)
 	return True
 
 def generateworld(randomseed):
@@ -292,12 +318,16 @@ def generateworld(randomseed):
 def printworld(con):
 	for y in range(map_height):
 		for x in range(map_width):
+			fgcolor = colors.get(worldtile(x, y))
+			bgcolor = colors.get(worldtile(x, y))
+			if (not worldtile(x, y) in ['water', 'mountain', 'polar']):
+				bgcolor = colors.get('ground')
 			con.draw_rect(
 				x+draw_offset_x, y+draw_offset_y, 
 				1, 1,
-				ord('.'),
-				fg=colors.get(worldtile(x, y)),
-				bg=colors.get(worldtile(x, y)))
+				ord('#'),
+				fg=fgcolor,
+				bg=bgcolor)
 			
 	libtcod.console_blit(
 		con, 0, 0, screen_width, screen_height, 0, 0, 0)
@@ -305,12 +335,12 @@ def printworld(con):
 '''
 DOPE AS HELL SEEDS:
 
+11684
 
 '''
 
 def main():
 	if len(sys.argv) > 1:
-		print("world seed: %d" % int(sys.argv[1]))
 		randomseed = int(sys.argv[1])
 		seed(randomseed)
 	else:
