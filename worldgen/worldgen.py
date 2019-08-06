@@ -66,7 +66,8 @@ ELEVATION_EROSION = 0.003
 MIN_MOUNTS = 12
 NUM_POLARS = 4
 COASTAL_DIST = 2
-STEPPE_FREQ = 0.5
+STEPPE_FREQ = 0.8
+WIND_HADLEY_BLOWOVER = 10
 
 def adjacenttiles(x, y, diag=False, tiletypes=None):
 	result = []
@@ -125,7 +126,7 @@ def generateelevation():
 
 	for gen in range(ELEVATION_GENS):
 		# add from faults
-		for y in list(range(map_height))[npolarcell:spolarcell]:
+		for y in list(range(map_height))[npolarcell:spolarcell+1]:
 			for x in list(range(map_width))[3:-3]:
 				for fault in faultlines:
 					if (abs((x-fault[0])**2 + (y-fault[1])**2 - \
@@ -338,6 +339,12 @@ def getonshorewind(y, degrees, wind, coastinfo, rainshadow):
 	northbounds = degrees - degrees%30
 	southbounds = northbounds + 30
 
+	# hadley cell winds blow onshore into the opposite hadley cell a bit
+	if (northbounds == 90):
+		northbounds -= WIND_HADLEY_BLOWOVER
+	if (southbounds == 90):
+		southbounds += WIND_HADLEY_BLOWOVER
+
 	# for each coast
 	for direction, dist in coastinfo:
 		# determine coast latitude
@@ -371,17 +378,6 @@ def setbiome(x, y,
 
 	global worldtiles
 	worldtiles[x + map_width * y] = 'ground'
-
-	'''
-	'oceanic'	
-	'coastal temp rainforest'
-	'cold desert'	
-	'cold steppe'	
-
-	'tundra'
-	'ice cap'
-
-	'''
 
 	# HADLEY CELL
 	if (degrees >= 80 and degrees <= 100 and
@@ -438,7 +434,7 @@ def setbiome(x, y,
 	if ((degrees <= 160 and degrees >= 120 or
 		degrees <= 60 and degrees >= 20) and
 		not onshorewind and
-		dist2coast > COASTAL_DIST):
+		dist2coast > COASTAL_DIST*1.5):
 		worldtiles[x + map_width * y] = 'cold desert'
 	# do cold step in setsteppes()
 	if ((degrees <= 170 and degrees >= 150 or
@@ -452,26 +448,30 @@ def setsteppes():
 	newmap = worldtiles[:]
 	for y in range(map_height):
 		for x in range(map_width):
-			adjtiles = adjacenttiles(x, y, True)
+			adjtiles = adjacenttiles(x, y, False)
 			adjtiles = [worldtile(*tile) for tile in adjtiles]
 			if ('cold desert' in adjtiles and
 				('humid continental' in adjtiles or
-				'hot steppe' in adjtiles)):
+				'hot steppe' in adjtiles or
+				'subarctic continental' in adjtiles)):
 				FREQ = STEPPE_FREQ
 				if (worldtile(x, y) == 'cold desert'):
-					FREQ /= 2.0
+					FREQ = 0
 				if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
 					newmap[x + map_width * y] = 'cold steppe'
 	for y in range(map_height):
 		for x in range(map_width):
-			adjtiles = adjacenttiles(x, y, True)
+			adjtiles = adjacenttiles(x, y, False)
 			adjtiles = [worldtile(*tile) for tile in adjtiles]
 			if ('hot desert' in adjtiles and
 				('tropical savannah' in adjtiles or
+				'humid subtropical' in adjtiles or
+				'humid continental' in adjtiles or
+				'tropical rainforest' in adjtiles or
 				'cold steppe' in adjtiles)):
 				FREQ = STEPPE_FREQ
 				if (worldtile(x, y) == 'hot desert'):
-					FREQ /= 2.0
+					FREQ = 0
 				if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
 					newmap[x + map_width * y] = 'hot steppe'
 	worldtiles = newmap
@@ -522,12 +522,10 @@ def generateworld(randomseed):
 		generateelevation()
 		coolworld = generatebiomes()
 		if not coolworld:
-			print("world not cool enough...")
 			randomseed = randint(0, 2**15)
 			seed(randomseed)
 
-	print("world seed: %d" % randomseed)
-				
+	print("world seed: %d" % randomseed)			
 
 def printworld(con):
 	for y in range(map_height):
@@ -543,7 +541,8 @@ def printworld(con):
 				printchar = '^'
 				fgcolor = bgcolor * libtcod.grey
 			if (worldtile(x, y) == 'water'):
-				if (choices([True, False], [0.05, 0.95])[0]):
+				if (((x+y) % 7 == 0 or x % 9 == 1) and 
+					(y % 5 == 0 or y % 8 == 1)):
 					printchar = '~'
 					fgcolor = libtcod.light_blue
 			con.draw_rect(
@@ -563,6 +562,12 @@ DOPE AS HELL SEEDS:
 22805
 4629
 32485
+28848
+27299
+32676
+28398
+27592
+19389
 
 '''
 
@@ -580,17 +585,27 @@ def main():
 		'libtcod tutorial revised', False, 
 		libtcod.RENDERER_SDL2, vsync=True)
 	con = libtcod.console.Console(screen_width, screen_height)
-	key = libtcod.Key()
-	mouse = libtcod.Mouse()
+	printbiome = ''
 
 	generateworld(randomseed)
 	printworld(con)
 	libtcod.console_flush()
 
 	while True:
-		for event in tcod.event.wait(0):
+		for event in tcod.event.wait():
 			if event.type == "QUIT":
 				raise SystemExit()
+			elif event.type == "MOUSEBUTTONDOWN":
+				scrx, scry = event.tile
+				mapx = scrx - draw_offset_x
+				mapy = scry - draw_offset_y
+				if (mapx >= 0 and
+					mapx < map_width and
+					mapy >= 0 and
+					mapy < map_height):
+
+					printbiome = worldtile(mapx, mapy) + ' '*50
+					print(printbiome)
 			elif event.type == "KEYDOWN":
 				if event.sym == 27:
 					raise SystemExit()
@@ -598,8 +613,15 @@ def main():
 					randomseed = randint(0, 2**15)
 					seed(randomseed)
 					generateworld(randomseed)	
-					printworld(con)
-					libtcod.console_flush()
+	
+		#con.clear()
+		printworld(con)
+		con.print(
+			1, screen_height-4, 
+			printbiome,
+			fg=libtcod.light_grey,
+			alignment=libtcod.LEFT)
+		libtcod.console_flush()
 
 if __name__=='__main__':
 	main()
