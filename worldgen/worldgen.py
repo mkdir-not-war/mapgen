@@ -470,7 +470,7 @@ def setsteppes():
 	newmap = worldtiles[:]
 	for y in range(map_height):
 		for x in range(map_width):
-			adjtiles = adjacenttiles(x, y, False)
+			adjtiles = adjacenttiles(x, y, True)
 			adjtiles = [worldtile(*tile) for tile in adjtiles]
 			if ('cold desert' in adjtiles and
 				worldtile(x, y) in [
@@ -483,7 +483,7 @@ def setsteppes():
 					newmap[x + map_width * y] = 'cold steppe'
 	for y in range(map_height):
 		for x in range(map_width):
-			adjtiles = adjacenttiles(x, y, False)
+			adjtiles = adjacenttiles(x, y, True)
 			adjtiles = [worldtile(*tile) for tile in adjtiles]
 			if ('hot desert' in adjtiles and
 				worldtile(x, y) in [
