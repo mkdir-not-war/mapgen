@@ -34,7 +34,8 @@ colors = {
 	'cold steppe': colormult(libtcod.light_red, libtcod.lighter_blue),	
 
 	'tundra': colormult(libtcod.lightest_blue, libtcod.lighter_grey),	
-	'ice cap': colormult(libtcod.lightest_blue, libtcod.white)
+	'ice cap': colormult(libtcod.lightest_blue, libtcod.white),
+	'volcano': libtcod.red
 }
 
 screen_width = 80 # /4 = 20
@@ -72,7 +73,7 @@ ELEVATION_EROSION = 0.003
 
 # biome stuff
 MIN_MOUNTS = 12
-NUM_POLARS = 4
+NUM_POLARS = 3
 COASTAL_DIST = 2
 STEPPE_FREQ = 0.8
 WIND_HADLEY_BLOWOVER = 10
@@ -114,6 +115,17 @@ def adjacenttiles(x, y, diag=False, tiletypes=None):
 
 	return result
 
+def moremountains(faultlines):
+	global elevationtiles
+	for y in list(range(map_height))[npolarcell:spolarcell+1]:
+		for x in list(range(map_width))[3:-3]:
+			for i in range(len(faultlines)):
+				if (i%2==1):
+					fault = faultlines[i]
+					if (abs((x-fault[0])**2 + (y-fault[1])**2 - \
+						fault[2]**2) < 1):
+						elevationtiles[x + map_width * y] += 10
+
 def generateelevation():
 	global elevationtiles
 	elevationtiles = [0.0] * map_width * map_height
@@ -152,6 +164,8 @@ def generateelevation():
 							newmap[x + map_width * y] * ELEVATION_SPREAD
 					newmap[x + map_width * y] *= ELEVATION_EROSION
 		elevationtiles = newmap[:]
+
+	moremountains(faultlines)
 
 	#elevationtiles = [(int)(i) for i in elevationtiles]
 
@@ -263,7 +277,7 @@ def setterrain(x, y):
 	if (elevationtiles[x + map_width * y] >= 3.5):
 		worldtiles[x + map_width * y] = 'mountain'
 
-def raisemountains():
+def raisepeaks():
 	mountains = gettilesbytype('mountain')
 	if (len(mountains) < MIN_MOUNTS):
 		return False
@@ -492,7 +506,7 @@ def generatebiomes():
 		for x in range(map_width):
 			setterrain(x, y)
 
-	if (raisemountains() == False):
+	if (raisepeaks() == False):
 		return False
 	mountains = gettilesbytype('mountain', 'polar')
 
@@ -517,6 +531,12 @@ def generatebiomes():
 			if (worldtile(x, y) == 'water'):
 				if (choices([True, False], [ice_prob, 1.0-ice_prob])[0]):
 					worldtiles[x + map_width * y] = 'ice cap'
+			if (worldtile(x, y) == 'mountain'):
+				if (len(
+					adjacenttiles(x, y, True, ['water', 'ice cap'])) >=
+					8):
+
+					worldtiles[x + map_width * y] = 'volcano'
 
 	# transition from deserts into steppes
 	setsteppes()
@@ -548,6 +568,9 @@ def printworld(con):
 			if (worldtile(x, y) in ['polar', 'mountain']):
 				printchar = '^'
 				fgcolor = colormult(bgcolor, libtcod.grey)
+			if (worldtile(x, y) == 'volcano'):
+				printchar = '^'
+				bgcolor = colors.get('mountain')
 			if (worldtile(x, y) == 'water'):
 				if (((x+y) % 7 == 0 or x % 9 == 1) and 
 					(y % 5 == 0 or y % 8 == 1)):
@@ -613,7 +636,6 @@ def main():
 					mapy < map_height):
 
 					printbiome = worldtile(mapx, mapy) + ' '*50
-					print(printbiome)
 			elif event.type == "KEYDOWN":
 				if event.sym == 27:
 					raise SystemExit()
