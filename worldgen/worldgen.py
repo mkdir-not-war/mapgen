@@ -1,7 +1,7 @@
 import sys
 import tcod as libtcod
 import tcod.event
-from random import random, choice, choices, randint, seed
+from random import random, choice, choices, randint, seed, shuffle
 
 colors = {
 	'black': libtcod.black,
@@ -26,6 +26,7 @@ colors = {
 	'tundra': libtcod.lightest_blue * libtcod.lighter_grey,	
 	'polar': libtcod.lightest_blue * libtcod.white
 }
+
 screen_width = 80 # /4 = 20
 screen_height = 50 # /4 ~= 12
 
@@ -200,8 +201,20 @@ def gettilesbytype(*tiletypes):
 def getrainshadow(x, y, degrees, wind, mountains):
 	result = False
 
+	northbounds = degrees - degrees%30
+	southbounds = northbounds + 30
 	wx, wy = wind
 
+	# follow wind vector backwards to check for mountain
+	# stop when the wind cell ends, or when a mountain is found
+	px = x-wx
+	py = y-wy
+	while (py <= northbounds and py >= southbounds and result == False):
+		if ((px, py) in mountains):
+			result = True
+		else:
+			px = px-wx
+			py = py-wy
 
 	return result
 
@@ -226,13 +239,12 @@ def raisemountains():
 
 	# raise some mountain peaks
 	# assumes MIN_MOUNTS > NUM_POLARS
+	shuffle(mountains)
 	for mt in mountains:
 		if len(adjacenttiles(mt[0], mt[1], 
 				diag=True, tiletypes=['mountain', 'polar'])) >= 6:
-			# 80% chance for a peak
-			if (choices([True, False], [0.5, 0.5])):
-				worldtiles[mt[0] + map_width * mt[1]] = 'polar'	
-				numpolars += 1
+			worldtiles[mt[0] + map_width * mt[1]] = 'polar'	
+			numpolars += 1
 
 			if (numpolars >= NUM_POLARS):
 				return True
@@ -263,17 +275,16 @@ def generatebiomes():
 
 	return True
 
-def generateworld():
+def generateworld(randomseed):
 	coolworld = False
-
-	randomseed = randint(0, 2**15)
-	seed(randomseed)
 
 	while (not coolworld):
 		generateelevation()
 		coolworld = generatebiomes()
 		if not coolworld:
-			print("lame world")
+			print("world not cool enough...")
+			randomseed = randint(0, 2**15)
+			seed(randomseed)
 
 	print("world seed: %d" % randomseed)
 				
@@ -291,11 +302,17 @@ def printworld(con):
 	libtcod.console_blit(
 		con, 0, 0, screen_width, screen_height, 0, 0, 0)
 
+'''
+DOPE AS HELL SEEDS:
+
+
+'''
 
 def main():
 	if len(sys.argv) > 1:
 		print("world seed: %d" % int(sys.argv[1]))
-		seed(int(sys.argv[1]))
+		randomseed = int(sys.argv[1])
+		seed(randomseed)
 	else:
 		randomseed = randint(0, 2**15)
 		seed(randomseed)
@@ -309,7 +326,7 @@ def main():
 	key = libtcod.Key()
 	mouse = libtcod.Mouse()
 
-	generateworld()
+	generateworld(randomseed)
 
 	while True:
 		printworld(con)
@@ -322,7 +339,7 @@ def main():
 				if event.sym == 27:
 					raise SystemExit()
 				elif event.sym == 13:
-					generateworld()	
+					generateworld(randomseed)	
 
 
 if __name__=='__main__':
