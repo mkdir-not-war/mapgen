@@ -336,6 +336,7 @@ def printworld(con):
 DOPE AS HELL SEEDS:
 
 11684
+22805
 
 '''
 
@@ -369,6 +370,8 @@ def main():
 				if event.sym == 27:
 					raise SystemExit()
 				elif event.sym == 13:
+					randomseed = randint(0, 2**15)
+					seed(randomseed)
 					generateworld(randomseed)	
 
 
