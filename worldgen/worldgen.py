@@ -2,29 +2,31 @@ import sys
 import tcod as libtcod
 import tcod.event
 from random import random, choice, choices, randint, seed, shuffle
+from numpy import multiply
 
 colors = {
 	'black': libtcod.black,
 	'ground': libtcod.Color(204, 120, 96),
 	'mountain': libtcod.Color(179, 51, 16),
 	'water': libtcod.desaturated_blue * libtcod.lighter_grey,
+	'polar': libtcod.lightest_blue * libtcod.white,
 
-	'tropical rainforest': libtcod.Color(143, 181, 100),	
-	'tropical savannah': libtcod.Color(143, 181, 100),	
-	'hot desert': libtcod.Color(143, 181, 100),	
-	'hot steppe': libtcod.Color(143, 181, 100),	
+	'tropical rainforest': libtcod.darker_green,	
+	'tropical savannah': libtcod.gold * libtcod.lighter_chartreuse,	
+	'hot desert': libtcod.gold,	
+	'hot steppe': libtcod.red * libtcod.gold,	
 
-	'humid continental': libtcod.Color(143, 181, 100),	
-	'subarctic continental': libtcod.Color(143, 181, 100),	
-	'mediterranean': libtcod.Color(143, 181, 100),	
-	'humid subtropical': libtcod.Color(143, 181, 100),	
-	'oceanic': libtcod.Color(143, 181, 100),	
-	'coastal temp rainforest': libtcod.Color(143, 181, 100),
-	'cold desert': libtcod.Color(143, 181, 100),	
-	'cold steppe': libtcod.Color(143, 181, 100),	
+	'humid continental': libtcod.Color(143, 181, 100) * libtcod.lightest_grey,	
+	'subarctic continental': libtcod.Color(143, 181, 100) * libtcod.grey,	
+	'mediterranean': libtcod.purple,	
+	'humid subtropical': libtcod.purple * libtcod.lighter_blue,	
+	'oceanic': libtcod.dark_orange,	
+	'coastal temp rainforest': libtcod.darker_purple,
+	'cold desert': libtcod.gold * libtcod.lightest_grey,	
+	'cold steppe': libtcod.light_red * libtcod.lighter_blue,	
 
 	'tundra': libtcod.lightest_blue * libtcod.lighter_grey,	
-	'polar': libtcod.lightest_blue * libtcod.white
+	'ice cap': libtcod.lightest_blue * libtcod.white
 }
 
 screen_width = 80 # /4 = 20
@@ -63,6 +65,8 @@ ELEVATION_EROSION = 0.003
 # biome stuff
 MIN_MOUNTS = 12
 NUM_POLARS = 4
+COASTAL_DIST = 2
+STEPPE_FREQ = 0.5
 
 def adjacenttiles(x, y, diag=False, tiletypes=None):
 	result = []
@@ -164,23 +168,36 @@ def getwind(degrees):
 		wind = (-1, -1)
 	return wind
 
-def getnearestcoast(x, y):
+def getcoastinfo(x, y):
 	dist = 1
-	waterfound = False
+	waterfound = []
 
-	#ewtiles = worldtiles[y*map_width:(y+1)*map_width]
-
-	# assumes there exists water on every row
-	while (not waterfound and dist<(map_width/2+1)):
+	while (dist<(map_width/2+1)):
 		xplus = (x+dist)%map_width
+		yplus = min((y+dist), map_height-1)
 		if (worldtiles[xplus + map_width * y] == 'water'):
-			waterfound = 'east'
+			waterfound.append(((1, 0), dist))
+		if (worldtiles[x + map_width * yplus] == 'water'):
+			waterfound.append(((0, 1), dist))
+
 		xminus = (x+map_width-dist)%map_width
+		yminus = max((y-dist), 0)
 		if (worldtiles[xminus + map_width * y] == 'water'):
-			waterfound = 'west'
+			waterfound.append(((-1, 0), dist))
+		if (worldtiles[x + map_width * yminus] == 'water'):
+			waterfound.append(((0, -1), dist))
+
+		if (worldtiles[xplus + map_width * yplus] == 'water'):
+			waterfound.append(((1, 1), dist+1))
+		if (worldtiles[xplus + map_width * yminus] == 'water'):
+			waterfound.append(((1, -1), dist+1))
+		if (worldtiles[xminus + map_width * yplus] == 'water'):
+			waterfound.append(((-1, 1), dist+1))
+		if (worldtiles[xminus + map_width * yminus] == 'water'):
+			waterfound.append(((-1, -1), dist+1))
 		dist += 1
 
-	return waterfound, dist
+	return waterfound
 
 def worldtile(x, y):
 	try:
@@ -259,19 +276,205 @@ def raisemountains():
 	if (numpolars < NUM_POLARS):
 		return False
 
-def getcurrenttemp(degrees, coast):
-	return 'warm'
+def getcurrenttemp(degrees, coastinfo):
+	result = None # None if inland, not coastal
+	for direction, dist in coastinfo:
+		if dist <= COASTAL_DIST:
+			if degrees < 10:
+				# north polar gyre
+				if direction[0] > 0:
+					result = 'cold'
+				elif direction[0] < 0:
+					result = 'warm'
+			elif degrees < 20:
+				# north ferrel gyre
+				if direction[0] > 0:
+					result = 'warm'
+				elif direction[0] < 0:
+					result = 'cold'
+			elif degrees < 50:
+				# north midlat gyre
+				if direction[0] > 0:
+					result = 'cold'
+				elif direction[0] < 0:
+					result = 'warm'
+			elif degrees < 90:
+				# north hadley gyre
+				if direction[0] > 0:
+					result = 'warm'
+				elif direction[0] < 0:
+					result = 'cold'
+			elif degrees < 130:
+				# south hadley gyre
+				if direction[0] > 0:
+					result = 'warm'
+				elif direction[0] < 0:
+					result = 'cold'
+			elif degrees < 160:
+				# south midlat gyre
+				if direction[0] > 0:
+					result = 'cold'
+				elif direction[0] < 0:
+					result = 'warm'
+			elif degrees < 170:
+				# south ferrel gyre
+				if direction[0] > 0:
+					result = 'warm'
+				elif direction[0] < 0:
+					result = 'cold'
+			else:
+				# south polar gyre
+				if direction[0] > 0:
+					result = 'cold'
+				elif direction[0] < 0:
+					result = 'warm'
+			return result
 
-def getonshorewind(wind, coast, dist2coast, rainshadow):
+
+def getonshorewind(y, degrees, wind, coastinfo, rainshadow):
+	if rainshadow:
+		return False
+
+	northbounds = degrees - degrees%30
+	southbounds = northbounds + 30
+
+	# for each coast
+	for direction, dist in coastinfo:
+		# determine coast latitude
+		coastdegrees = (int)((float)(y + direction[1]*dist)/tilesperdegree)
+		# if in the same wind cell
+		if (coastdegrees >= northbounds and coastdegrees <= southbounds):
+			# if the coast is in the direciton the wind blows from
+			if (direction == wind):
+				return True
+
 	return False
 
+def dist2coast(coastinfo):
+	if (coastinfo is None or len(coastinfo) <= 0):
+		return None
+
+	mindist = coastinfo[0][1]
+	#mindirection = coastinfo[0][0]
+
+	for direction, dist in coastinfo:
+		if dist < mindist:
+			mindist = dist
+			#mindirection = direction
+
+	return mindist
+
 def setbiome(x, y, 
-	degrees, 
-	coast, dist2coast, currenttemp, 
+	degrees, dist2coast,
+	coastinfo, currenttemp, 
 	rainshadow, onshorewind):
 
 	global worldtiles
 	worldtiles[x + map_width * y] = 'ground'
+
+	'''
+	'oceanic'	
+	'coastal temp rainforest'
+	'cold desert'	
+	'cold steppe'	
+
+	'tundra'
+	'ice cap'
+
+	'''
+
+	# HADLEY CELL
+	if (degrees >= 80 and degrees <= 100 and
+		onshorewind):
+		worldtiles[x + map_width * y] = 'tropical rainforest'
+	elif (degrees >= 70 and degrees <= 110 and 
+		not rainshadow):
+		worldtiles[x + map_width * y] = 'tropical savannah'
+	elif (degrees >= 60 and degrees <= 120 and 
+		onshorewind and
+		dist2coast <= COASTAL_DIST and
+		currenttemp == 'warm'):
+		worldtiles[x + map_width * y] = 'tropical savannah'
+	elif ((degrees <= 80 and degrees >= 60 or
+		degrees <= 120 and degrees >= 100) and
+		currenttemp != 'warm' and
+		not onshorewind):
+		worldtiles[x + map_width * y] = 'hot desert'
+	elif (degrees <= 120 and degrees >= 60):
+		worldtiles[x + map_width * y] = 'hot steppe'
+
+	# FERREL CELL and POLAR CELL
+	if ((degrees <= 150 and degrees >= 120 or
+		degrees <= 60 and degrees >= 30)):
+		worldtiles[x + map_width * y] = 'humid continental'
+	# carve away at humid continental
+	if ((degrees <= 160 and degrees >= 135 or
+		degrees <= 45 and degrees >= 20)):
+		worldtiles[x + map_width * y] = 'subarctic continental'
+	# carve into more unique biomes
+	if ((degrees <= 135 and degrees >= 120 or
+		degrees <= 60 and degrees >= 45) and
+		onshorewind and
+		currenttemp == 'cold' and
+		dist2coast < COASTAL_DIST):
+		worldtiles[x + map_width * y] = 'mediterranean'
+	elif ((degrees <= 135 and degrees >= 120 or
+		degrees <= 60 and degrees >= 45) and
+		onshorewind and
+		currenttemp == 'warm' and
+		dist2coast <= COASTAL_DIST):
+		worldtiles[x + map_width * y] = 'humid subtropical'
+	elif ((degrees <= 150 and degrees >= 130 or
+		degrees <= 50 and degrees >= 30) and
+		currenttemp == 'warm'):
+		worldtiles[x + map_width * y] = 'oceanic'
+	if ((degrees <= 135 and degrees >= 120 or
+		degrees <= 60 and degrees >= 45) and
+		onshorewind and
+		currenttemp == 'warm' and
+		dist2coast <= 1):
+		if (choices([True, False], [0.5, 0.5])[0]):
+			worldtiles[x + map_width * y] = 'coastal temp rainforest'
+	if ((degrees <= 160 and degrees >= 120 or
+		degrees <= 60 and degrees >= 20) and
+		not onshorewind and
+		dist2coast > COASTAL_DIST):
+		worldtiles[x + map_width * y] = 'cold desert'
+	# do cold step in setsteppes()
+	if ((degrees <= 170 and degrees >= 150 or
+		degrees <= 30 and degrees >= 10)):
+		worldtiles[x + map_width * y] = 'tundra'
+	elif ((degrees >= 175 or degrees <= 15)):
+		worldtiles[x + map_width * y] = 'ice cap'
+
+def setsteppes():
+	global worldtiles
+	newmap = worldtiles[:]
+	for y in range(map_height):
+		for x in range(map_width):
+			adjtiles = adjacenttiles(x, y, True)
+			adjtiles = [worldtile(*tile) for tile in adjtiles]
+			if ('cold desert' in adjtiles and
+				('humid continental' in adjtiles or
+				'hot steppe' in adjtiles)):
+				FREQ = STEPPE_FREQ
+				if (worldtile(x, y) == 'cold desert'):
+					FREQ /= 2.0
+				if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
+					newmap[x + map_width * y] = 'cold steppe'
+	for y in range(map_height):
+		for x in range(map_width):
+			adjtiles = adjacenttiles(x, y, True)
+			adjtiles = [worldtile(*tile) for tile in adjtiles]
+			if ('hot desert' in adjtiles and
+				('tropical savannah' in adjtiles or
+				'cold steppe' in adjtiles)):
+				FREQ = STEPPE_FREQ
+				if (worldtile(x, y) == 'hot desert'):
+					FREQ /= 2.0
+				if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
+					newmap[x + map_width * y] = 'hot steppe'
+	worldtiles = newmap
 
 def generatebiomes():
 	defaultwater()
@@ -288,17 +491,28 @@ def generatebiomes():
 	for y in range(map_height):
 		degrees = (int)((float)(y)/tilesperdegree)
 		wind = getwind(degrees)
+		ice_prob = 0.0
+		if (degrees >= 165 or degrees < 10):
+			ice_prob = 1.0-float(min(175-degrees, degrees))/10.0
 		for x in range(map_width):
 			if (worldtile(x, y) == 'ground'):
 				adjtiles = adjacenttiles(x, y, True)
-				coast, dist2coast = getnearestcoast(x, y)
+				coastinfo = getcoastinfo(x, y)
+				nearestcoast = dist2coast(coastinfo)
 				rainshadow = getrainshadow(x, y, degrees, wind, mountains)
-				onshorewind = getonshorewind(wind, coast, dist2coast, rainshadow)
-				currenttemp = getcurrenttemp(degrees, coast)
+				onshorewind = getonshorewind(y, degrees, wind, coastinfo, rainshadow)
+				currenttemp = getcurrenttemp(degrees, coastinfo)
 				setbiome(x, y, 
-					degrees, 
-					coast, dist2coast, currenttemp,
+					degrees, nearestcoast,
+					coastinfo, currenttemp,
 					rainshadow, onshorewind)
+			if (worldtile(x, y) == 'water'):
+				if (choices([True, False], [ice_prob, 1.0-ice_prob])[0]):
+					worldtiles[x + map_width * y] = 'ice cap'
+
+	# transition from deserts into steppes
+	setsteppes()
+
 	return True
 
 def generateworld(randomseed):
@@ -318,14 +532,24 @@ def generateworld(randomseed):
 def printworld(con):
 	for y in range(map_height):
 		for x in range(map_width):
+			printchar = '#'
 			fgcolor = colors.get(worldtile(x, y))
 			bgcolor = colors.get(worldtile(x, y))
-			if (not worldtile(x, y) in ['water', 'mountain', 'polar']):
+			if (worldtile(x, y) == 'ice cap'):
+				bgcolor = colors.get('water')
+			elif (not worldtile(x, y) in ['water', 'mountain', 'polar']):
 				bgcolor = colors.get('ground')
+			if (worldtile(x, y) in ['polar', 'mountain']):
+				printchar = '^'
+				fgcolor = bgcolor * libtcod.grey
+			if (worldtile(x, y) == 'water'):
+				if (choices([True, False], [0.05, 0.95])[0]):
+					printchar = '~'
+					fgcolor = libtcod.light_blue
 			con.draw_rect(
 				x+draw_offset_x, y+draw_offset_y, 
 				1, 1,
-				ord('#'),
+				ord(printchar),
 				fg=fgcolor,
 				bg=bgcolor)
 			
@@ -337,6 +561,8 @@ DOPE AS HELL SEEDS:
 
 11684
 22805
+4629
+32485
 
 '''
 
@@ -358,11 +584,10 @@ def main():
 	mouse = libtcod.Mouse()
 
 	generateworld(randomseed)
+	printworld(con)
+	libtcod.console_flush()
 
 	while True:
-		printworld(con)
-		libtcod.console_flush()
-
 		for event in tcod.event.wait(0):
 			if event.type == "QUIT":
 				raise SystemExit()
@@ -373,7 +598,8 @@ def main():
 					randomseed = randint(0, 2**15)
 					seed(randomseed)
 					generateworld(randomseed)	
-
+					printworld(con)
+					libtcod.console_flush()
 
 if __name__=='__main__':
 	main()
