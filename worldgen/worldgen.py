@@ -73,9 +73,9 @@ ELEVATION_EROSION = 0.003
 
 # biome stuff
 MIN_MOUNTS = 12
-NUM_POLARS = 3
+NUM_POLARS = 4
 COASTAL_DIST = 2
-STEPPE_FREQ = 0.8
+STEPPE_FREQ = 0.9
 WIND_HADLEY_BLOWOVER = 10
 
 def adjacenttiles(x, y, diag=False, tiletypes=None):
@@ -289,7 +289,7 @@ def raisepeaks():
 	shuffle(mountains)
 	for mt in mountains:
 		if len(adjacenttiles(mt[0], mt[1], 
-				diag=True, tiletypes=['mountain', 'polar'])) >= 6:
+				diag=True, tiletypes=['mountain'])) >= 6:
 			worldtiles[mt[0] + map_width * mt[1]] = 'polar'	
 			numpolars += 1
 
@@ -473,12 +473,12 @@ def setsteppes():
 			adjtiles = adjacenttiles(x, y, False)
 			adjtiles = [worldtile(*tile) for tile in adjtiles]
 			if ('cold desert' in adjtiles and
-				('humid continental' in adjtiles or
-				'hot steppe' in adjtiles or
-				'subarctic continental' in adjtiles)):
+				worldtile(x, y) in [
+					'tropical savannah',
+					'humid subtropical',
+					'humid continental',
+					'subarctic continental']):
 				FREQ = STEPPE_FREQ
-				if (worldtile(x, y) == 'cold desert'):
-					FREQ = 0
 				if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
 					newmap[x + map_width * y] = 'cold steppe'
 	for y in range(map_height):
@@ -486,14 +486,12 @@ def setsteppes():
 			adjtiles = adjacenttiles(x, y, False)
 			adjtiles = [worldtile(*tile) for tile in adjtiles]
 			if ('hot desert' in adjtiles and
-				('tropical savannah' in adjtiles or
-				'humid subtropical' in adjtiles or
-				'humid continental' in adjtiles or
-				'tropical rainforest' in adjtiles or
-				'cold steppe' in adjtiles)):
+				worldtile(x, y) in [
+					'tropical savannah',
+					'humid subtropical',
+					'humid continental',
+					'tropical rainforest']):
 				FREQ = STEPPE_FREQ
-				if (worldtile(x, y) == 'hot desert'):
-					FREQ = 0
 				if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
 					newmap[x + map_width * y] = 'hot steppe'
 	worldtiles = newmap
@@ -553,7 +551,7 @@ def generateworld(randomseed):
 			randomseed = randint(0, 2**15)
 			seed(randomseed)
 
-	print("world seed: %d" % randomseed)			
+	return randomseed			
 
 def printworld(con):
 	for y in range(map_height):
@@ -582,9 +580,18 @@ def printworld(con):
 				ord(printchar),
 				fg=fgcolor,
 				bg=bgcolor)
-			
+	
 	libtcod.console_blit(
 		con, 0, 0, screen_width, screen_height, 0, 0, 0)
+
+	#con.blit(con, fg_alpha=0, bg_alpha=0)
+
+def printworldseed(con, seed):
+	con.print(
+		4, 2, 
+		"world seed: %d      " % seed,
+		fg=libtcod.light_grey,
+		alignment=libtcod.LEFT)
 
 '''
 DOPE AS HELL SEEDS:
@@ -599,6 +606,7 @@ DOPE AS HELL SEEDS:
 28398
 27592
 19389
+11655
 
 '''
 
@@ -618,8 +626,9 @@ def main():
 	con = libtcod.console.Console(screen_width, screen_height)
 	printbiome = ''
 
-	generateworld(randomseed)
+	printseed = generateworld(randomseed)
 	printworld(con)
+	printworldseed(con, printseed)
 	libtcod.console_flush()
 
 	while True:
@@ -642,12 +651,13 @@ def main():
 				elif event.sym == 13:
 					randomseed = randint(0, 2**15)
 					seed(randomseed)
-					generateworld(randomseed)	
+					printseed = generateworld(randomseed)	
 	
 		#con.clear()
 		printworld(con)
+		printworldseed(con, printseed)
 		con.print(
-			1, screen_height-4, 
+			4, screen_height-3, 
 			printbiome,
 			fg=libtcod.light_grey,
 			alignment=libtcod.LEFT)
