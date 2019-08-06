@@ -1,19 +1,30 @@
 import sys
 import tcod as libtcod
-from random import random, choice, randint, seed
+import tcod.event
+from random import random, choice, choices, randint, seed
 
 colors = {
+	'black': libtcod.black,
 	'ground': libtcod.Color(204, 120, 96),
 	'mountain': libtcod.Color(179, 51, 16),
-	'tree': libtcod.Color(143, 181, 100),
 	'water': libtcod.desaturated_blue * libtcod.lighter_grey,
-	'polar': libtcod.lightest_blue * libtcod.white,
-	'black': libtcod.black,
-	'dark_ground': libtcod.Color(128, 75, 60),
-	'dark_mountain': libtcod.Color(64, 37, 30),
-	'dark_tree': libtcod.Color(101, 128, 70),
-	'dark_water': libtcod.Color(96, 103, 128),
-	'dark_polar': libtcod.lightest_grey
+
+	'tropical rainforest': libtcod.Color(143, 181, 100),	
+	'tropical savannah': libtcod.Color(143, 181, 100),	
+	'hot desert': libtcod.Color(143, 181, 100),	
+	'hot steppe': libtcod.Color(143, 181, 100),	
+
+	'humid continental': libtcod.Color(143, 181, 100),	
+	'subarctic continental': libtcod.Color(143, 181, 100),	
+	'mediterranean': libtcod.Color(143, 181, 100),	
+	'humid subtropical': libtcod.Color(143, 181, 100),	
+	'oceanic': libtcod.Color(143, 181, 100),	
+	'coastal temp rainforest': libtcod.Color(143, 181, 100),
+	'cold desert': libtcod.Color(143, 181, 100),	
+	'cold steppe': libtcod.Color(143, 181, 100),	
+
+	'tundra': libtcod.lightest_blue * libtcod.lighter_grey,	
+	'polar': libtcod.lightest_blue * libtcod.white
 }
 screen_width = 80 # /4 = 20
 screen_height = 50 # /4 ~= 12
@@ -28,24 +39,31 @@ draw_offset_y = (int)((screen_height - map_height) / 2)
 elevationtiles = []
 worldtiles = []
 
-interval = (int)(map_height/6)
-#npolarcell = (int)(interval/2)
+# latitude info
+interval = (int)(map_height/6) #30 degrees
 npolarcell = interval
 nmidcell = interval*2
 equator = interval*3
 smidcell = map_height-interval*2
 spolarcell = map_height-interval
 
-NUMFAULTS = 26
+tilesperdegree = (float)(map_height/180)
+
+# elevation/terrain
+NUMFAULTS = 34
 SMALLRADIUS = 1
 BIGRADIUS = 14
 FAULT_WIDTH = 2
 ELEVATION_GENS = 6
 ELEVATION_BUILD = 1.01
-ELEVATION_SPREAD = 0.23
-ELEVATION_EROSION = 0.004
+ELEVATION_SPREAD = 0.22
+ELEVATION_EROSION = 0.003
 
-def adjacenttiles(x, y, diag=False):
+# biome stuff
+MIN_MOUNTS = 12
+NUM_POLARS = 4
+
+def adjacenttiles(x, y, diag=False, tiletypes=None):
 	result = []
 	xplus = x+1
 	if (xplus >= map_width):
@@ -75,6 +93,10 @@ def adjacenttiles(x, y, diag=False):
 		if (not yminus is None):
 			result.append((xplus, yminus))
 			result.append((xminus, yminus))
+
+	if (not tiletypes is None):
+		result = [tile for tile in result \
+			if worldtile(tile[0], tile[1]) in tiletypes]
 
 	return result
 
@@ -110,7 +132,7 @@ def generateelevation():
 		for y in range(map_height):
 			for x in range(map_width):
 				if (newmap[x + map_width * y] > 0):
-					adjtiles = adjacenttiles(x, y, False)
+					adjtiles = adjacenttiles(x, y)
 					for adjtile in adjtiles:
 						newmap[adjtile[0] + map_width * adjtile[1]] += \
 							newmap[x + map_width * y] * ELEVATION_SPREAD
@@ -119,26 +141,153 @@ def generateelevation():
 
 	#elevationtiles = [(int)(i) for i in elevationtiles]
 
-def generatebiomes():
-	global worldtiles
-	worldtiles = ['water'] * map_width * map_height
+def getwind(degrees):
+	wind = (0, 0)
+	if degrees < 30:
+		# polar cell, north
+		wind = (-1, 1)
+	elif degrees < 60:
+		# ferrel cell, north
+		wind = (1, -1)
+	elif degrees < 90:
+		# hadley cell, north
+		wind = (-1, 1)
+	elif degrees < 120:
+		# hadley cell, south
+		wind = (-1, -1)
+	elif degrees < 150:
+		# ferrel cell, south
+		wind = (1, 1)
+	else:
+		# polar cell, south
+		wind = (-1, -1)
+	return wind
+
+def getnearestcoast(x, y):
+	dist = 1
+	waterfound = False
+
+	#ewtiles = worldtiles[y*map_width:(y+1)*map_width]
+
+	# assumes there exists water on every row
+	while (not waterfound and dist<(map_width/2+1)):
+		xplus = (x+dist)%map_width
+		if (worldtiles[xplus + map_width * y] == 'water'):
+			waterfound = 'east'
+		xminus = (x+map_width-dist)%map_width
+		if (worldtiles[xminus + map_width * y] == 'water'):
+			waterfound = 'west'
+		dist += 1
+
+	return waterfound, dist
+
+def worldtile(x, y):
+	try:
+		result = worldtiles[x + map_width * y]
+	except:
+		print(len(worldtiles), x, y)
+		input()
+	return result
+
+def gettilesbytype(*tiletypes):
+	result = []
 	for y in range(map_height):
 		for x in range(map_width):
-			if (elevationtiles[x + map_width * y] >= 1):
-				worldtiles[x + map_width * y] = 'ground'
-			if (elevationtiles[x + map_width * y] >= 3.5):
-				worldtiles[x + map_width * y] = 'mountain'
-			if (elevationtiles[x + map_width * y] >= 6):
-				worldtiles[x + map_width * y] = 'polar'
+			if worldtile(x, y) in tiletypes:
+				result.append((x, y))
+	return result
+
+def getrainshadow(x, y, degrees, wind, mountains):
+	result = False
+
+	wx, wy = wind
+
+
+	return result
+
+def defaultwater():
+	global worldtiles
+	worldtiles = ['water'] * map_width * map_height
+
+def setterrain(x, y):
+	global worldtiles
+
+	if (elevationtiles[x + map_width * y] >= 1.0):
+		worldtiles[x + map_width * y] = 'ground'
+	if (elevationtiles[x + map_width * y] >= 3.5):
+		worldtiles[x + map_width * y] = 'mountain'
+
+def raisemountains():
+	mountains = gettilesbytype('mountain')
+	if (len(mountains) < MIN_MOUNTS):
+		return False
+
+	numpolars = 0
+
+	# raise some mountain peaks
+	# assumes MIN_MOUNTS > NUM_POLARS
+	for mt in mountains:
+		if len(adjacenttiles(mt[0], mt[1], 
+				diag=True, tiletypes=['mountain', 'polar'])) >= 6:
+			# 80% chance for a peak
+			if (choices([True, False], [0.5, 0.5])):
+				worldtiles[mt[0] + map_width * mt[1]] = 'polar'	
+				numpolars += 1
+
+			if (numpolars >= NUM_POLARS):
+				return True
+
+	if (numpolars < NUM_POLARS):
+		return False
+
+def generatebiomes():
+	defaultwater()
+
+	# map high altitude temps
+	for y in range(map_height):
+		for x in range(map_width):
+			setterrain(x, y)
+
+	if (raisemountains() == False):
+		return False
+	mountains = gettilesbytype('mountain')
+
+	for y in range(map_height):
+		degrees = (int)((float)(y)/tilesperdegree)
+		wind = getwind(degrees)
+		for x in range(map_width):
+			if (worldtile(x, y) == 'ground'):
+				adjtiles = adjacenttiles(x, y, True)
+				coast, dist2coast = getnearestcoast(x, y)
+				rainshadow = getrainshadow(x, y, degrees, wind, mountains)
+
+	return True
+
+def generateworld():
+	coolworld = False
+
+	randomseed = randint(0, 2**15)
+	seed(randomseed)
+
+	while (not coolworld):
+		generateelevation()
+		coolworld = generatebiomes()
+		if not coolworld:
+			print("lame world")
+
+	print("world seed: %d" % randomseed)
+				
 
 def printworld(con):
 	for y in range(map_height):
 		for x in range(map_width):
-			libtcod.console_set_char_background(
-				con, 
+			con.draw_rect(
 				x+draw_offset_x, y+draw_offset_y, 
-				colors.get(worldtiles[x + map_width * y]), 
-				libtcod.BKGND_SET)
+				1, 1,
+				ord('.'),
+				fg=colors.get(worldtile(x, y)),
+				bg=colors.get(worldtile(x, y)))
+			
 	libtcod.console_blit(
 		con, 0, 0, screen_width, screen_height, 0, 0, 0)
 
@@ -147,6 +296,9 @@ def main():
 	if len(sys.argv) > 1:
 		print("world seed: %d" % int(sys.argv[1]))
 		seed(int(sys.argv[1]))
+	else:
+		randomseed = randint(0, 2**15)
+		seed(randomseed)
 
 	libtcod.console_set_custom_font('arial10x10.png', 
 		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
@@ -157,23 +309,20 @@ def main():
 	key = libtcod.Key()
 	mouse = libtcod.Mouse()
 
-	generateelevation()
-	generatebiomes()
+	generateworld()
 
-	while not libtcod.console_is_window_closed():
-		libtcod.sys_check_for_event(
-			libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, 
-			key, mouse)
-		key_char = chr(key.c)
-		if key.vk == libtcod.KEY_ESCAPE:
-			return True
-
-		if key.vk == libtcod.KEY_ENTER:
-			generateelevation()
-			generatebiomes()
-
+	while True:
 		printworld(con)
 		libtcod.console_flush()
+
+		for event in tcod.event.wait(0):
+			if event.type == "QUIT":
+				raise SystemExit()
+			elif event.type == "KEYDOWN":
+				if event.sym == 27:
+					raise SystemExit()
+				elif event.sym == 13:
+					generateworld()	
 
 
 if __name__=='__main__':
