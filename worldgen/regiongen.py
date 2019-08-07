@@ -3,6 +3,7 @@ import tcod as libtcod
 import tcod.event
 from random import random, choice, choices, randint, seed, shuffle
 from numpy import multiply
+from noise import noisegrid
 
 def colormult(c1, c2):
 	result = tuple(multiply(c1, c2) // 255)
@@ -29,33 +30,14 @@ biomes = [
 ]
 
 colors = {
+	# terrain colors
 	'black': libtcod.black,
 	'ground': libtcod.Color(204, 120, 96),
-	'mountain': libtcod.Color(179, 51, 16),
-	'water': colormult(libtcod.desaturated_blue, libtcod.lighter_grey),
-	'polar': colormult(libtcod.lightest_blue, libtcod.white),
+	'grass': libtcod.light_chartreuse,
+	'water': colormult(libtcod.blue, libtcod.light_chartreuse),
 
-	'tropical rainforest': libtcod.darker_green,	
-	'tropical savannah': colormult(
-		libtcod.gold, libtcod.lighter_chartreuse),	
-	'hot desert': libtcod.gold,	
-	'hot steppe': colormult(libtcod.red, libtcod.gold),	
-
-	'humid continental': colormult(
-		libtcod.Color(143, 181, 100), libtcod.lightest_grey),	
-	'subarctic continental': colormult(
-		libtcod.Color(143, 181, 100), libtcod.grey),	
-	'mediterranean': libtcod.purple,	
-	'humid subtropical': colormult(
-		libtcod.purple, libtcod.lighter_blue),	
-	'oceanic': libtcod.dark_orange,	
-	'coastal temp rainforest': libtcod.darker_purple,
-	'cold desert': colormult(libtcod.gold, libtcod.lightest_grey),	
-	'cold steppe': colormult(libtcod.light_red, libtcod.lighter_blue),	
-
-	'tundra': colormult(libtcod.lightest_blue, libtcod.lighter_grey),	
-	'ice cap': colormult(libtcod.lightest_blue, libtcod.white),
-	'volcano': libtcod.red
+	# poi colors
+	'poi': libtcod.white
 }
 
 screen_width = 80 # /4 = 20
@@ -146,6 +128,9 @@ def main():
 	con = libtcod.console.Console(screen_width, screen_height)
 
 	biome = choice(biomes)
+	p1 = noisegrid()
+	p2 = noisegrid()
+	p3 = noisegrid()
 
 	generateregion(biome, p1, p2, p3)
 	printregion(con)

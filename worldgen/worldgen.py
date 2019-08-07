@@ -553,7 +553,7 @@ def generateworld(randomseed):
 
 	return randomseed			
 
-def printworld(con):
+def printworld(root, con):
 	for y in range(map_height):
 		for x in range(map_width):
 			printchar = '#'
@@ -580,11 +580,11 @@ def printworld(con):
 				ord(printchar),
 				fg=fgcolor,
 				bg=bgcolor)
-	
+	'''
 	libtcod.console_blit(
 		con, 0, 0, screen_width, screen_height, 0, 0, 0)
-
-	#con.blit(con, fg_alpha=0, bg_alpha=0)
+	'''
+	con.blit(root)
 
 def printworldseed(con, seed):
 	con.print(
@@ -620,14 +620,14 @@ def main():
 
 	libtcod.console_set_custom_font('arial10x10.png', 
 		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
-	libtcod.console_init_root(screen_width, screen_height, 
-		'libtcod tutorial revised', False, 
-		libtcod.RENDERER_SDL2, vsync=True)
+	root = libtcod.console_init_root(screen_width, screen_height, 
+			'world gen', False, 
+			libtcod.RENDERER_SDL2, vsync=True)
 	con = libtcod.console.Console(screen_width, screen_height)
 	printbiome = ''
 
 	printseed = generateworld(randomseed)
-	printworld(con)
+	printworld(root, con)
 	printworldseed(con, printseed)
 	libtcod.console_flush()
 
@@ -654,7 +654,7 @@ def main():
 					printseed = generateworld(randomseed)	
 	
 		#con.clear()
-		printworld(con)
+		printworld(root, con)
 		printworldseed(con, printseed)
 		con.print(
 			4, screen_height-3, 
