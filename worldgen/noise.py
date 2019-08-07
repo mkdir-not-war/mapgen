@@ -1,13 +1,5 @@
 import random
 
-GRID_WIDTH = 64
-GRID_HEIGHT = 64
-
-SKELLYWIDTH = 16
-SKELLYHEIGHT = 16
-
-MAX_VAL = 1.0
-
 '''
 a     b
  xy
@@ -17,6 +9,7 @@ c     d
 0 <= x <= 1
 0 <= y <= 1
 '''
+
 def bilinlerp(x, y, a, b, c, d):
 	return (
 		a * (1-x) * (1-y) +
@@ -25,12 +18,15 @@ def bilinlerp(x, y, a, b, c, d):
 		d * x * y
 		)
 
-def noisegrid():
+def noisegrid(size=64, precision=4):
+	GRID_WIDTH = GRID_HEIGHT = size
+	SKELLYWIDTH = SKELLYHEIGHT = 2**precision
+
 	skeleton = [None] * SKELLYWIDTH * SKELLYHEIGHT
 	result = [None] * GRID_WIDTH * GRID_HEIGHT
 	tilesperskelly = (GRID_WIDTH/SKELLYWIDTH, GRID_HEIGHT/SKELLYHEIGHT)
 	for i in range(len(skeleton)):
-		skeleton[i] = random.random() * MAX_VAL
+		skeleton[i] = random.random()
 	for y in range(GRID_HEIGHT):
 		for x in range(GRID_WIDTH):
 			skellyx = int(x / tilesperskelly[0])

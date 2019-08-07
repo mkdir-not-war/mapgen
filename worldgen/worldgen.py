@@ -38,8 +38,8 @@ colors = {
 	'volcano': libtcod.red
 }
 
-screen_width = 80 # /4 = 20
-screen_height = 50 # /4 ~= 12
+screen_width = 80
+screen_height = 50
 
 # Map panel parameters
 map_width = 64
@@ -544,14 +544,15 @@ def generatebiomes():
 def generateworld(randomseed):
 	coolworld = False
 
+	newseed = randomseed
 	while (not coolworld):
 		generateelevation()
 		coolworld = generatebiomes()
 		if not coolworld:
-			randomseed = randint(0, 2**15)
-			seed(randomseed)
+			newseed = randint(0, 2**15)
+			seed(newseed)
 
-	return randomseed			
+	return newseed			
 
 def printworld(root, con):
 	for y in range(map_height):
