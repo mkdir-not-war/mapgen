@@ -46,7 +46,8 @@ def noisegrid(size=64, precision=4):
 				wx, wy, skellya, skellyb, skellyc, skellyd)
 	return result
 
-def printgrid(grid):
+def printgrid(grid, size=64):
+	GRID_WIDTH = GRID_HEIGHT = size
 	for y in range(GRID_HEIGHT):
 		line = ','.join(
 			['{0:.3f}'.format(x) for x in grid[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])

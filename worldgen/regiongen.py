@@ -68,7 +68,7 @@ def generateregion(biome, p1, p2, p3):
 	'''
 	pass		
 
-def printregion(con):
+def printregion(root, con):
 	for y in range(map_height):
 		for x in range(map_width):
 			pass
@@ -99,10 +99,7 @@ def printregion(con):
 				bg=bgcolor)
 			'''
 	
-	libtcod.console_blit(
-		con, 0, 0, screen_width, screen_height, 0, 0, 0)
-
-	#con.blit(con, fg_alpha=0, bg_alpha=0)
+	con.blit(root)
 
 def printinfo(con, seed):
 	con.print(
@@ -122,9 +119,9 @@ def main():
 
 	libtcod.console_set_custom_font('arial10x10.png', 
 		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
-	libtcod.console_init_root(screen_width, screen_height, 
-		'libtcod tutorial revised', False, 
-		libtcod.RENDERER_SDL2, vsync=True)
+	root = libtcod.console_init_root(screen_width, screen_height, 
+			'libtcod tutorial revised', False, 
+			libtcod.RENDERER_SDL2, vsync=True)
 	con = libtcod.console.Console(screen_width, screen_height)
 
 	biome = choice(biomes)
@@ -133,7 +130,7 @@ def main():
 	p3 = noisegrid()
 
 	generateregion(biome, p1, p2, p3)
-	printregion(con)
+	printregion(root, con)
 	printinfo(con, printseed)
 	libtcod.console_flush()
 
@@ -149,7 +146,7 @@ def main():
 					seed(randomseed)
 					generateregion(biome, p1, p2, p3)
 
-		printregion(con)
+		printregion(root, con)
 		printinfo(con)
 		libtcod.console_flush()
 
