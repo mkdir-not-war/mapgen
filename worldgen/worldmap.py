@@ -108,6 +108,7 @@ class WorldMap():
 
 	def generateelevation(self):
 		elevationtiles = [0.0] * self.map_width * self.map_height
+		newmap = elevationtiles[:]
 
 		# generate faults
 		faultlines = []
@@ -142,31 +143,32 @@ class WorldMap():
 							newmap[adjtile[0] + self.map_width * adjtile[1]] += \
 								newmap[x + self.map_width * y] * ELEVATION_SPREAD
 						newmap[x + self.map_width * y] *= ELEVATION_EROSION
+			elevationtiles = newmap[:]
 
-			# copy elevations to appropriate tiles
-			for y in range(self.map_height):
-				for x in range(self.map_width):
-					self.worldtile(x, y).elevation = \
-						elevationtiles[x + self.map_width * y]
+		# copy elevations to appropriate tiles
+		for y in range(self.map_height):
+			for x in range(self.map_width):
+				self.worldtile(x, y).elevation = \
+					elevationtiles[x + self.map_width * y]
 
 		self.moremountains(faultlines)
 
-		# map high altitude temps
+		# map ground, mountain and water biomes
 		for y in range(self.map_height):
 			for x in range(self.map_width):
 				self.setterrain(x, y)
 
+		# map polar mountain biomes
 		if (self.raisepeaks() == False):
 			return False
 		return True
 
 	def setterrain(self, x, y):
 		tile = self.worldtile(x, y)
-		if (tile.elevation >= 1.0):
-			print(tile.position, 'ground')
+		tileelev = tile.elevation
+		if (tileelev >= 1.0 and tileelev < 3.5):
 			tile.biome = 'ground'
-		if (tile.elevation >= 3.5):
-			print(tile.position, 'mountain')
+		elif (tileelev >= 3.5):
 			tile.biome = 'mountain'
 
 	def raisepeaks(self):
@@ -520,10 +522,4 @@ class WorldMap():
 
 		while (not coolworld):
 			coolworld = self.generateelevation()
-
-			'''
-			for tile in self.tiles:
-				if (tile.elevation > 1.0):
-					print(tile.position, tile.biome)
-			'''
-			#self.generatebiomes()
+			self.generatebiomes()
