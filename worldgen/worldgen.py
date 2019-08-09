@@ -645,7 +645,7 @@ def main():
 					mapy >= 0 and
 					mapy < map_height):
 
-					printbiome = worldtile(mapx, mapy) + ' '*50
+					printbiome = worldtile(mapx, mapy)
 			elif event.type == "KEYDOWN":
 				if event.sym == 27:
 					raise SystemExit()
@@ -654,8 +654,9 @@ def main():
 					seed(randomseed)
 					printseed = generateworld(randomseed)	
 	
-		#con.clear()
+		
 		printworld(root, con)
+		con.clear()
 		printworldseed(con, printseed)
 		con.print(
 			4, screen_height-3, 
