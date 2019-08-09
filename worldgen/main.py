@@ -1,9 +1,16 @@
 import sys
 import tcod as libtcod
 import tcod.event
+from random import seed
+from enum import Enum
 
 from color import colors, colormult
 from worldmap import WorldMap
+from noise import noisegrid
+
+class ViewState(Enum):
+	WORLD = 1
+	REGION = 2
 
 screen_width = 80
 screen_height = 50
@@ -46,6 +53,13 @@ def printworld(root, con, world):
 
 	con.blit(root)
 
+def printregion(root, con, region):
+	for y in range(map_height):
+		for x in range(map_width):
+			pass
+	
+	con.blit(root)
+
 
 '''
 DOPE AS HELL SEEDS:
@@ -69,6 +83,10 @@ def main():
 		randomseed = int(sys.argv[1])
 		seed(randomseed)
 
+	p1 = noisegrid(size=64, precision=4)
+	p2 = noisegrid(size=64, precision=4)
+	p3 = noisegrid(size=64, precision=4)
+
 	libtcod.console_set_custom_font('arial10x10.png', 
 		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 	root = libtcod.console_init_root(screen_width, screen_height, 
@@ -78,28 +96,46 @@ def main():
 	printbiome = ''
 
 	world = WorldMap(map_width, map_height)
+	region = None
 	printworld(root, con, world)
 	libtcod.console_flush()
+
+	viewstate = ViewState.WORLD
 
 	while True:
 		for event in tcod.event.wait():
 			if event.type == "QUIT":
 				raise SystemExit()
-			elif event.type == "MOUSEBUTTONDOWN":
-				scrx, scry = event.tile
-				mapx = scrx - draw_offset_x
-				mapy = scry - draw_offset_y
-				if (mapx >= 0 and
-					mapx < map_width and
-					mapy >= 0 and
-					mapy < map_height):
 
-					printbiome = world.worldtile(mapx, mapy).biome + ' '*50
-			elif event.type == "KEYDOWN":
-				if event.sym == 27:
-					raise SystemExit()
+			elif viewstate == ViewState.WORLD:
+				printworld(root, con, world)
+				if event.type == "MOUSEBUTTONDOWN":
+					scrx, scry = event.tile
+					mapx = scrx - draw_offset_x
+					mapy = scry - draw_offset_y
+					tile = None
+					if (mapx >= 0 and
+						mapx < map_width and
+						mapy >= 0 and
+						mapy < map_height):
+						tile = world.worldtile(mapx, mapy)
+
+					if event.button == "BUTTON_LEFT":
+						viewstate = ViewState.REGION
+				elif event.type == "KEYDOWN":
+					if event.sym == 27:
+						raise SystemExit()
+			elif viewstate == ViewState.REGION:
+				printregion(root, con, region)
+				if event.type == "MOUSEBUTTONDOWN":
+					if event.button == "BUTTON_LEFT":
+						pass
+					elif event.button == "BUTTON_RIGHT":
+						pass
+				elif event.type == "KEYDOWN":
+					if event.sym == 27:
+						viewstate = ViewState.WORLD
 	
-		printworld(root, con, world)
 		con.clear()
 		con.print(
 			4, screen_height-3, 

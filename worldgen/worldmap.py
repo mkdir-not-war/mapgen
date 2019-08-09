@@ -23,6 +23,7 @@ class WorldTile():
 		self.elevation = 0.0
 		self.position = (x, y)
 		self.dist2coast = -1
+		self.dir2coast = None
 
 class WorldMap():
 
@@ -357,14 +358,14 @@ class WorldMap():
 			return None
 
 		mindist = coastinfo[0][1]
-		#mindirection = coastinfo[0][0]
+		mindirection = coastinfo[0][0]
 
 		for direction, dist in coastinfo:
 			if dist < mindist:
 				mindist = dist
-				#mindirection = direction
+				mindirection = direction
 
-		return mindist
+		return mindist, mindirection
 
 	def setbiome(self, x, y, 
 		degrees, dist2coast,
@@ -484,13 +485,16 @@ class WorldMap():
 			for x in range(self.map_width):
 				tile = self.worldtile(x, y)
 
+				# get coast info and put into tile
 				coastinfo = None
 				nearestcoast = None
 				if (tile.biome != 'water'):
 					coastinfo = self.getcoastinfo(x, y)
-					nearestcoast = self.dist2coast(coastinfo)
+					nearestcoast, dir2coast = self.dist2coast(coastinfo)
 					tile.dist2coast = nearestcoast
+					tile.dir2coast = dir2coast
 
+				# get rest of the info and set biome
 				if (tile.biome == 'ground'):
 					adjtiles = self.adjacenttiles(x, y, True)
 					rainshadow = self.getrainshadow(
@@ -502,14 +506,17 @@ class WorldMap():
 						degrees, nearestcoast,
 						coastinfo, currenttemp,
 						rainshadow, onshorewind)
+
+				# polar ice caps
 				if (tile.biome == 'water'):
 					if (choices([True, False], [ice_prob, 1.0-ice_prob])[0]):
 						tile.biome = 'ice cap'
+
+				# island mountains = volcano
 				if (tile.biome == 'mountain'):
 					if (len(
 						self.adjacenttiles(
 							x, y, True, ['water', 'ice cap'])) >= 8):
-
 						tile.biome = 'volcano'
 
 		# transition from deserts into steppes

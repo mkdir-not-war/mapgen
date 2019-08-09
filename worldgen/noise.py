@@ -1,16 +1,6 @@
 import random
 
-'''
-a     b
- xy
-
-c     d
-
-0 <= x <= 1
-0 <= y <= 1
-'''
-
-def bilinlerp(x, y, a, b, c, d):
+def bilerp(x, y, a, b, c, d):
 	return (
 		a * (1-x) * (1-y) +
 		b * x * (1-y) +
@@ -42,10 +32,13 @@ def noisegrid(size=64, precision=4):
 			skellyc = skeleton[skellyx + SKELLYWIDTH * skellyyplus]
 			skellyd = skeleton[skellyxplus + SKELLYWIDTH * skellyyplus]
 
-			result[x + GRID_WIDTH * y] = bilinlerp(
+			result[x + GRID_WIDTH * y] = bilerp(
 				wx, wy, skellya, skellyb, skellyc, skellyd)
 	return result
 
+###################################################### DEBUG STUFF ###############
+
+# print R code
 def printgrid(grid, size=64):
 	GRID_WIDTH = GRID_HEIGHT = size
 	for y in range(GRID_HEIGHT):
@@ -56,6 +49,7 @@ def printgrid(grid, size=64):
 		','.join(['v%d'%i for i in range(GRID_HEIGHT)]),
 		GRID_WIDTH,
 		GRID_HEIGHT))
+	print('image(result)')
 
 def main():
 	while(1):
@@ -67,3 +61,5 @@ def main():
 
 if __name__=='__main__':
 	main()
+
+#####################################################################################
