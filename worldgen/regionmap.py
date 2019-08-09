@@ -30,12 +30,15 @@ pois = [
 ]
 
 # elevation/terrain
+MAX_MOUNTS = 12
+MIN_MOUNTS = 8
 TILES2COAST_CONN = 6
 MAXELEVATIONLINETILES = 6
 
 class RegionTile():
 	def __init__(self, x, y):
 		self.allwater = False # use to just cover with water (ocean, lake)
+		self.islava = False # use in the center of volcano regions
 		self.coastdirs = []	# use to make coastlines for oceans and lakes
 		self.poi = '' # determine to place a poi (only one allowed)
 		self.forest = False
@@ -46,11 +49,12 @@ class RegionTile():
 		self.roaddir = None		
 
 class RegionMap():
-	def __init__(self, pindex, worldtile, adjtiles, p1, p2, p3, regionside=32):
+	def __init__(self, pindex, worldtile, adjtiles, noisegrids, regionside=32):
 		self.width = self.height = regionside
 
-		# use to query noisemaps
+		# use to query noisegrids
 		self.pindex = pindex
+		self.noisegrids = noisegrids
 
 		self.refreshtimes = 0
 		self.biome = worldtile.biome
@@ -89,7 +93,11 @@ class RegionMap():
 			return
 		else:
 			# first, do coasts and general elevation
-			if (self.elevation == 1):
+			if (self.biome == 'volcano'):
+				# special case for volcanos
+				# tile.islava = True
+				pass
+			elif (self.elevation == 1):
 				# coastal, adjacent
 				pass
 			elif (self.elevation == 1.4):
@@ -97,3 +105,13 @@ class RegionMap():
 				pass
 			else:
 				# non-coastal, do general elevation lines
+				pass
+			# second, do hills and mountains
+			if (self.biome in ['mountain', 'polar']):
+				nummounts = MIN_MOUNTS + int(
+					(MAX_MOUNTS-MIN_MOUNTS) * self.noisegrids[0].tiles[0])
+				peaks = self.noisegrids[0].extremes(
+					mindist=2, buffer=5, num=nummounts)
+				print(peaks)
+			else:
+				pass

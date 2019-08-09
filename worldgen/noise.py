@@ -1,5 +1,5 @@
 import random
-from pathfinding import noiseextremes
+from pathfinding import manhattandist
 
 def bilerp(x, y, a, b, c, d):
 	return (
@@ -56,6 +56,36 @@ class NoiseGrid():
 					wx, wy, skellya, skellyb, skellyc, skellyd)
 		return result
 
+	def extremes(self, mindist=1, buffer=1, minmax='max', num=1):
+		result = []
+		sortednoise = []
+
+		for y in range(self.size):
+			for x in range(self.size):
+				if (x+buffer < self.size and
+					x-buffer >= 0 and
+					y+buffer < self.size and
+					y-buffer >= 0):
+					sortednoise.append((self.get(x, y), (x, y)))
+
+		sortednoise = sorted(sortednoise, key=lambda x: x[0], reverse=(minmax=='max'))
+
+		#threshold = 0.8
+		#sortednoise = filter(lambda x: x[0]/self.amplitude>=threshold, sortednoise)
+
+		index = 0
+		while (len(result) < num):
+			val, pos = sortednoise[index]
+			tooclose = False
+			for pos2 in result:
+				if manhattandist(pos, pos2) <= buffer or tooclose:
+					tooclose = True
+			if not tooclose:
+				result.append(pos)
+			index += 1
+
+		return result
+
 ###################################################### DEBUG STUFF ###############
 
 # print R code
@@ -81,7 +111,7 @@ def main():
 		printgrid(sumgrid)
 		print()
 
-		ext = noiseextremes(grid, grid2, mindist=4, buffer=2, num=4)
+		ext = sumgrid.extremes(minmax='min', mindist=4, buffer=2, num=4)
 		for x, y in ext:
 			print(str(grid.get(x, y)) + '\t' + str((x, y)))
 
