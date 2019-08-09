@@ -31,10 +31,7 @@ class WorldMap():
 		self.map_width = mapwidth
 		self.map_height = mapheight
 
-		self.tiles = []
-		for y in range(self.map_height):
-			for x in range(self.map_width):
-				self.tiles.append(WorldTile(x, y))
+		self.resettiles()
 
 		# latitude info
 		self.interval = (int)(self.map_height/6) #30 degrees
@@ -51,6 +48,12 @@ class WorldMap():
 	def worldtile(self, x, y):
 		result = self.tiles[x + self.map_width * y]
 		return result
+
+	def resettiles(self):
+		self.tiles = []
+		for y in range(self.map_height):
+			for x in range(self.map_width):
+				self.tiles.append(WorldTile(x, y))
 
 	def gettilesbybiome(self, *biomes):
 		result = []
@@ -162,6 +165,7 @@ class WorldMap():
 		# map polar mountain biomes
 		if (self.raisepeaks() == False):
 			return False
+
 		return True
 
 	def setterrain(self, x, y):
@@ -528,5 +532,6 @@ class WorldMap():
 		coolworld = False
 
 		while (not coolworld):
+			self.resettiles()
 			coolworld = self.generateelevation()
 			self.generatebiomes()

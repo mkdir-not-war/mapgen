@@ -6,6 +6,7 @@ from enum import Enum
 
 from color import colors, colormult
 from worldmap import WorldMap
+from regionmap import RegionMap
 from noise import noisegrid
 
 class ViewState(Enum):
@@ -54,29 +55,38 @@ def printworld(root, con, world):
 	con.blit(root)
 
 def printregion(root, con, region):
-	for y in range(map_height):
-		for x in range(map_width):
-			pass
+	for y in range(region.height):
+		for x in range(region.width):
+			tile = region.regiontile(x, y)
+			printchar = '+'
+			fgcolor = None
+			bgcolor = None
+			if (tile.allwater):
+				bgcolor = colors.get('water')
+				if (((x+y) % 7 == 0 or x % 9 == 1) and 
+					(y % 5 == 0 or y % 8 == 1)):
+					printchar = '~'
+					fgcolor = colors.get('waterfg')
+			else:
+				bgcolor = colors.get('ground')
+			if fgcolor is None:
+				fgcolor = bgcolor
+			con.draw_rect(
+				x+draw_offset_x, y+draw_offset_y, 
+				1, 1,
+				ord(printchar),
+				fg=fgcolor,
+				bg=bgcolor)
 	
 	con.blit(root)
 
-
-'''
-DOPE AS HELL SEEDS:
-
-11684
-22805
-4629
-32485
-28848
-27299
-32676
-28398
-27592
-19389
-11655
-
-'''
+def printUI(con, world, region, viewstate):
+	if (viewstate == ViewState.REGION):
+		con.print(
+			4, 2, 
+			region.biome,
+			fg=libtcod.light_grey,
+			alignment=libtcod.LEFT)
 
 def main():
 	if len(sys.argv) > 1:
@@ -118,12 +128,16 @@ def main():
 						mapx < map_width and
 						mapy >= 0 and
 						mapy < map_height):
-						tile = world.worldtile(mapx, mapy)
 
-					if event.button == "BUTTON_LEFT":
-						viewstate = ViewState.REGION
+						tile = world.worldtile(mapx, mapy)
+						if event.button == libtcod.event.BUTTON_LEFT:
+							pindex = tile.position[0] + map_width * tile.position[1]
+							region = RegionMap(pindex, tile, p1, p2, p3)
+							viewstate = ViewState.REGION
+						else:
+							print(event.button)
 				elif event.type == "KEYDOWN":
-					if event.sym == 27:
+					if event.sym == libtcod.event.K_ESCAPE:
 						raise SystemExit()
 			elif viewstate == ViewState.REGION:
 				printregion(root, con, region)
@@ -133,16 +147,29 @@ def main():
 					elif event.button == "BUTTON_RIGHT":
 						pass
 				elif event.type == "KEYDOWN":
-					if event.sym == 27:
+					if event.sym == libtcod.event.K_ESCAPE:
 						viewstate = ViewState.WORLD
 	
 		con.clear()
-		con.print(
-			4, screen_height-3, 
-			printbiome,
-			fg=libtcod.light_grey,
-			alignment=libtcod.LEFT)
+		printUI(con, world, region, viewstate)
 		libtcod.console_flush()
 
 if __name__=='__main__':
 	main()
+
+'''
+DOPE AS HELL SEEDS:
+
+11684
+22805
+4629
+32485
+28848
+27299
+32676
+28398
+27592
+19389
+11655
+
+'''
