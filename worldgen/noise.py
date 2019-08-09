@@ -1,4 +1,5 @@
 import random
+from pathfinding import noiseextremes
 
 def bilerp(x, y, a, b, c, d):
 	return (
@@ -8,42 +9,61 @@ def bilerp(x, y, a, b, c, d):
 		d * x * y
 		)
 
-def noisegrid(size=64, precision=4):
-	GRID_WIDTH = GRID_HEIGHT = size
-	SKELLYWIDTH = SKELLYHEIGHT = 2**precision
+class NoiseGrid():
+	def __init__(self, size=64, precision=4):
+		self.size = size
+		self.amplitude = 1
+		self.precision = precision
+		self.tiles = self.generate()
 
-	skeleton = [None] * SKELLYWIDTH * SKELLYHEIGHT
-	result = [None] * GRID_WIDTH * GRID_HEIGHT
-	tilesperskelly = (GRID_WIDTH/SKELLYWIDTH, GRID_HEIGHT/SKELLYHEIGHT)
-	for i in range(len(skeleton)):
-		skeleton[i] = random.random()
-	for y in range(GRID_HEIGHT):
-		for x in range(GRID_WIDTH):
-			skellyx = int(x / tilesperskelly[0])
-			skellyxplus = (skellyx+1)%SKELLYWIDTH
-			wx = float(x%tilesperskelly[0]) / tilesperskelly[0]
+	def get(self, x, y):
+		result = self.tiles[x + self.size * y]
+		return result
 
-			skellyy = int(y / tilesperskelly[1])
-			skellyyplus = (skellyy+1)%SKELLYHEIGHT
-			wy = float(y%tilesperskelly[1]) / tilesperskelly[1]
+	# assume same size & precision?
+	def add(self, noisegrid):
+		result = NoiseGrid(self.size, self.precision)
+		for i in range(result.size**2):
+			result.tiles[i] = self.tiles[i] + noisegrid.tiles[i]
+		result.amplitude = self.amplitude + noisegrid.amplitude
+		return result
 
-			skellya = skeleton[skellyx + SKELLYWIDTH * skellyy]
-			skellyb = skeleton[skellyxplus + SKELLYWIDTH * skellyy]
-			skellyc = skeleton[skellyx + SKELLYWIDTH * skellyyplus]
-			skellyd = skeleton[skellyxplus + SKELLYWIDTH * skellyyplus]
+	def generate(self):
+		GRID_WIDTH = GRID_HEIGHT = self.size
+		SKELLYWIDTH = SKELLYHEIGHT = 2**self.precision
 
-			result[x + GRID_WIDTH * y] = bilerp(
-				wx, wy, skellya, skellyb, skellyc, skellyd)
-	return result
+		skeleton = [None] * SKELLYWIDTH * SKELLYHEIGHT
+		result = [None] * GRID_WIDTH * GRID_HEIGHT
+		tilesperskelly = (GRID_WIDTH/SKELLYWIDTH, GRID_HEIGHT/SKELLYHEIGHT)
+		for i in range(len(skeleton)):
+			skeleton[i] = random.random()
+		for y in range(GRID_HEIGHT):
+			for x in range(GRID_WIDTH):
+				skellyx = int(x / tilesperskelly[0])
+				skellyxplus = (skellyx+1)%SKELLYWIDTH
+				wx = float(x%tilesperskelly[0]) / tilesperskelly[0]
+
+				skellyy = int(y / tilesperskelly[1])
+				skellyyplus = (skellyy+1)%SKELLYHEIGHT
+				wy = float(y%tilesperskelly[1]) / tilesperskelly[1]
+
+				skellya = skeleton[skellyx + SKELLYWIDTH * skellyy]
+				skellyb = skeleton[skellyxplus + SKELLYWIDTH * skellyy]
+				skellyc = skeleton[skellyx + SKELLYWIDTH * skellyyplus]
+				skellyd = skeleton[skellyxplus + SKELLYWIDTH * skellyyplus]
+
+				result[x + GRID_WIDTH * y] = bilerp(
+					wx, wy, skellya, skellyb, skellyc, skellyd)
+		return result
 
 ###################################################### DEBUG STUFF ###############
 
 # print R code
-def printgrid(grid, size=64):
-	GRID_WIDTH = GRID_HEIGHT = size
+def printgrid(grid):
+	GRID_WIDTH = GRID_HEIGHT = grid.size
 	for y in range(GRID_HEIGHT):
 		line = ','.join(
-			['{0:.3f}'.format(x) for x in grid[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
+			['{0:.3f}'.format(x) for x in grid.tiles[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
 		print('v' + str(y) + ' <- c(' + line + ')')
 	print('result <- array(c(%s),dim = c(%d,%d))' % (
 		','.join(['v%d'%i for i in range(GRID_HEIGHT)]),
@@ -55,8 +75,16 @@ def main():
 	while(1):
 		seed = int(input("seed: "))
 		random.seed(seed)
-		grid = noisegrid()
-		printgrid(grid)
+		grid = NoiseGrid(16, 3)
+		grid2 = NoiseGrid(16, 3)
+		sumgrid = grid.add(grid2)
+		printgrid(sumgrid)
+		print()
+
+		ext = noiseextremes(grid, grid2, mindist=4, buffer=2, num=4)
+		for x, y in ext:
+			print(str(grid.get(x, y)) + '\t' + str((x, y)))
+
 
 
 if __name__=='__main__':

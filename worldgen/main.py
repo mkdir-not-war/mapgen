@@ -7,7 +7,7 @@ from enum import Enum
 from color import colors, colormult
 from worldmap import WorldMap
 from regionmap import RegionMap
-from noise import noisegrid
+from noise import NoiseGrid
 
 class ViewState(Enum):
 	WORLD = 1
@@ -93,9 +93,9 @@ def main():
 		randomseed = int(sys.argv[1])
 		seed(randomseed)
 
-	p1 = noisegrid(size=64, precision=4)
-	p2 = noisegrid(size=64, precision=4)
-	p3 = noisegrid(size=64, precision=4)
+	p1 = NoiseGrid(size=64, precision=4)
+	p2 = NoiseGrid(size=64, precision=4)
+	p3 = NoiseGrid(size=64, precision=4)
 
 	libtcod.console_set_custom_font('arial10x10.png', 
 		libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)

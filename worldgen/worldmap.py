@@ -240,13 +240,13 @@ class WorldMap():
 				waterfound.append(((0, -1), dist))
 
 			if (self.worldtile(xplus, yplus).biome == 'water'):
-				waterfound.append(((1, 1), dist+1))
+				waterfound.append(((1, 1), dist+.4))
 			if (self.worldtile(xplus, yminus).biome == 'water'):
-				waterfound.append(((1, -1), dist+1))
+				waterfound.append(((1, -1), dist+.4))
 			if (self.worldtile(xminus, yplus).biome == 'water'):
-				waterfound.append(((-1, 1), dist+1))
+				waterfound.append(((-1, 1), dist+.4))
 			if (self.worldtile(xminus, yminus).biome == 'water'):
-				waterfound.append(((-1, -1), dist+1))
+				waterfound.append(((-1, -1), dist+.4))
 			dist += 1
 
 		return waterfound

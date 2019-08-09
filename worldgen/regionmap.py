@@ -1,3 +1,5 @@
+from pathfinding import astar
+
 biomes = [
 	'tropical rainforest',
 	'tropical savannah',
@@ -27,22 +29,24 @@ pois = [
 	'town'
 ]
 
-regiontiles = []
-pointsofinterest = {}
-dungeonsystems = {}
+# elevation/terrain
+TILES2COAST_CONN = 6
+MAXELEVATIONLINETILES = 6
 
 class RegionTile():
 	def __init__(self, x, y):
 		self.allwater = False # use to just cover with water (ocean, lake)
 		self.coastdirs = []	# use to make coastlines for oceans and lakes
 		self.poi = '' # determine to place a poi (only one allowed)
-		self.riverdir = None
-		self.roaddir = None
-		self.elevationdir = None
 		self.forest = False
 
+		# only cardinal and diagonals
+		self.riverdir = None 
+		self.elevationdir = None
+		self.roaddir = None		
+
 class RegionMap():
-	def __init__(self, pindex, worldtile, p1, p2, p3, regionside=32):
+	def __init__(self, pindex, worldtile, adjtiles, p1, p2, p3, regionside=32):
 		self.width = self.height = regionside
 
 		# use to query noisemaps
@@ -56,30 +60,40 @@ class RegionMap():
 			for x in range(self.width):
 				self.tiles.append(RegionTile(x, y))
 
+		# meta info
+		dungeonentrances = {} # (x, y) -> dungeonId
+		dungeons = {} # dungeonId -> Dungeon()
+		towns = {} # (x, y) -> Town()
+
 		# terrain info
 		self.coastdir = worldtile.dir2coast
-		self.iscoast = (worldtile.dist2coast == 1)
+		self.elevation = worldtile.dist2coast
 
 		# load from biome data
 		self.forestdensity = 0
 		self.numrivers = 0
 
-		self.generateregion()
+		self.generateregion(adjtiles)
 
 	def regiontile(self, x, y):
 		result = self.tiles[x + self.width * y]
 		return result
 
-	def generateregion(self):
+	def generateregion(self, adjtiles):
 		if (self.biome in ['water', 'ice cap']):
 			# maybe small islands?
 			# icy shit on ice caps (but then how to handle poles?)
 			# otherwise, all water
 			for tile in self.tiles:
 				tile.allwater = True
+			return
 		else:
-			for tile in self.tiles:
-				self.generatetile(tile)
-
-	def generatetile(self, regiontile):
-		pass
+			# first, do coasts and general elevation
+			if (self.elevation == 1):
+				# coastal, adjacent
+				pass
+			elif (self.elevation == 1.4):
+				# coastal, diagonal
+				pass
+			else:
+				# non-coastal, do general elevation lines
