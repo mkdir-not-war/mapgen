@@ -33,9 +33,10 @@ class RegionTile():
 		self.roaddir = None		
 
 class RegionMap():
-	def __init__(self, x, y, world, noisegrids, regionside=32):
+	def __init__(self, x, y, world, noisegrids, regionside):
 		self.width = self.height = regionside
 
+		self.worldpos = (x, y)
 		worldtile = world.worldtile(x, y)
 		adjtiles = world.adjacenttiles(x, y)
 
@@ -44,6 +45,7 @@ class RegionMap():
 			world.map_width * worldtile.position[1]
 
 		# same noise everyone else has
+		# (deep copy, so doesn't use a ton of memory)
 		self.noisegrids = noisegrids
 
 		# translated noise grids (personal noise)
@@ -70,15 +72,21 @@ class RegionMap():
 		self.elevation = worldtile.dist2coast
 
 		# load from biome data
-		self.forestdensity = biomedata[self.biome]['forestdensity']
-		self.numrivers = biomedata[self.biome]['numrivers']
-		self.numlakes = biomedata[self.biome]['numlakes']
-		self.weather = biomedata[self.biome]['weather']
-		############ Add different weather for each season later ###########
+		self.forestdensity = 0
+		self.numrivers = 0
+		self.numlakes = 0
+		self.weather = []
+		self.refreshtimes = []
+		if (self.biome in biomedata):
+			self.forestdensity = biomedata[self.biome]['forestdensity']
+			self.numrivers = biomedata[self.biome]['numrivers']
+			self.numlakes = biomedata[self.biome]['numlakes']
+			self.weather = biomedata[self.biome]['weather']
+			############ Add different weather for each season later ###########
 
-		changesperday = biomedata[self.biome]['changesperday']
-		self.refreshtimes = [i*24.0/changesperday \
-			for i in range(changesperday)]
+			changesperday = biomedata[self.biome]['changesperday']
+			self.refreshtimes = [i*24.0/changesperday \
+				for i in range(changesperday)]
 
 		self.generateregion(adjtiles)
 
