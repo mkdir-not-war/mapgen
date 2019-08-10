@@ -17,7 +17,7 @@ pois = [
 MAX_MOUNTS = 12
 MIN_MOUNTS = 8
 TILES2COAST_CONN = 6
-MAXELEVATIONLINETILES = 6
+MAXCONCENTRICELEVATION = 6
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -29,10 +29,12 @@ class RegionTile():
 		self.poi = '' # determine to place a poi (only one allowed)
 		self.forest = False
 
-		# only cardinal and diagonals
-		self.riverdir = None 
+		# cardinal and diagonals (only cardinal at zoomed in level)
 		self.elevationdir = None
-		self.roaddir = None		
+		self.roaddir = None	
+
+		# only cardinal (used to determine direction of flow)
+		self.riverdir = None 
 
 class RegionMap():
 	def __init__(self, x, y, world, noisegrids, regionside):
@@ -40,7 +42,9 @@ class RegionMap():
 		self.size = regionside**2
 
 		self.worldpos = (x, y)
+
 		worldtile = world.worldtile(x, y)
+
 		adjpos = world.adjacenttiles(x, y, True)
 		adjtiles = {}
 		for pos in adjpos:
@@ -76,7 +80,7 @@ class RegionMap():
 
 		# terrain info
 		self.coastdir = worldtile.dir2coast
-		self.elevation = worldtile.dist2coast
+		self.dist2coast = worldtile.dist2coast
 
 		# load from biome data
 		self.forestdensity = 0
@@ -208,14 +212,16 @@ class RegionMap():
 			terrainnoise = self.noisegrids[0].add(self.tnoisegrids[0])
 			terrainnoise = terrainnoise.scale(4)
 
-			# first, do coasts and general elevation
+			# first, do coasts and general dist2coast
 			if (self.biome == 'volcano'):
 				# special case for volcanos
 				self.genvolcanoregion()
 				return
-			elif (self.elevation < 2):
+			elif (self.dist2coast < 2):
 				# coastal, adjacent
-				waterdirections = [direction for direction in adjtiles if (adjtiles[direction].biome == 'water')]
+				waterdirections = [direction \
+					for direction in adjtiles \
+					if (adjtiles[direction].biome == 'water')]
 				path = []
 				for waterdir in waterdirections:
 					start, stop = self.coaststartstop(waterdir)
@@ -238,11 +244,39 @@ class RegionMap():
 								pos[1]+waterdir[1]*dist)
 			else:
 				# non-coastal, do general elevation lines
-				pass
+				# only carindal directions
+				downslopedirections = [direction \
+					for direction in adjtiles \
+					if (adjtiles[direction].dist2coast < self.dist2coast) and
+					0 in direction]
+				path = []
+				self.setneighbors(True)
+				for downslopedir in downslopedirections:
+					start, stop = self.coaststartstop(downslopedir)
+					path = astar(start, stop, self, terrainnoise)
+					for pos in path:
+						self.regiontile(*pos).elevationdir = downslopedir
+						dist = 1
+						newpos = (
+							pos[0]+downslopedir[0]*dist, 
+							pos[1]+downslopedir[1]*dist)
+						while (self.inbounds(*newpos)):
+							if (terrainnoise.get(*newpos) > 
+								terrainnoise.amplitude / 4.0):
+								self.regiontile(*newpos).elevationdir = None
+							else:
+								self.regiontile(*newpos).elevationdir = \
+									downslopedir
+							dist += 1
+							newpos = (
+								pos[0]+downslopedir[0]*dist, 
+								pos[1]+downslopedir[1]*dist)
+
 			# second, do hills and mountains
 			if (self.biome in ['mountain', 'polar']):
 				nummounts = MIN_MOUNTS + int(
-					(MAX_MOUNTS-MIN_MOUNTS) * self.noisegrids[0].tiles[self.pindex])
+					(MAX_MOUNTS-MIN_MOUNTS) * \
+					self.noisegrids[0].tiles[self.pindex])
 				peaks = self.noisegrids[0].extremes(
 					mindist=2, buffer=5, num=nummounts)
 				print(peaks)

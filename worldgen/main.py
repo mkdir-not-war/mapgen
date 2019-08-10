@@ -14,7 +14,7 @@ class ViewState(Enum):
 	REGION = 2
 
 screen_width = 80
-screen_height = 50
+screen_height = 80
 
 draw_offset_x = 0
 draw_offset_y = 0
@@ -83,6 +83,16 @@ def printregion(root, con, region, adjregions):
 						fgcolor = colors.get('waterfg')
 				else:
 					bgcolor = colors.get('ground')
+					if (tile.elevationdir):
+						if (tile.elevationdir[1] > 0):
+							printchar = 'v'
+						elif (tile.elevationdir[1] < 0):
+							printchar = '^'
+						if (tile.elevationdir[0] > 0):
+							printchar = '>'
+						elif (tile.elevationdir[0] < 0):
+							printchar = '<'
+						fgcolor = colors.get('mountain')
 				if fgcolor is None:
 					fgcolor = bgcolor
 				drawpos = (
