@@ -244,6 +244,7 @@ def main():
 				elif event.type == "KEYDOWN":
 					if event.sym == libtcod.event.K_ESCAPE:
 						viewstate = ViewState.WORLD
+						adjregions.clear()
 	
 		con.clear()
 		printUI(con, world, region, viewstate)

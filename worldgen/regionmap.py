@@ -188,6 +188,7 @@ class RegionMap():
 			return
 		else:
 			terrainnoise = self.noisegrids[0].add(self.tnoisegrids[0])
+			terrainnoise = terrainnoise.scale(4)
 
 			# first, do coasts and general elevation
 			if (self.biome == 'volcano'):
@@ -197,9 +198,26 @@ class RegionMap():
 			elif (self.elevation < 2):
 				# coastal, adjacent
 				waterdirections = [direction for direction in adjtiles if (adjtiles[direction].biome == 'water')]
+				path = []
 				for waterdir in waterdirections:
 					start, stop = self.coaststartstop(waterdir)
 					path = astar(start, stop, self, terrainnoise)
+					for pos in path:
+						self.regiontile(*pos).allwater = True
+						dist = 1
+						newpos = (
+							pos[0]+waterdir[0]*dist, 
+							pos[1]+waterdir[1]*dist)
+						while (
+							newpos[0] >= 0 and
+							newpos[0] < self.width and
+							newpos[1] >= 0 and
+							newpos[1] < self.height):
+							self.regiontile(*newpos).allwater = True
+							dist += 1
+							newpos = (
+								pos[0]+waterdir[0]*dist, 
+								pos[1]+waterdir[1]*dist)
 			else:
 				# non-coastal, do general elevation lines
 				pass

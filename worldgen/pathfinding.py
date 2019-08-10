@@ -1,3 +1,5 @@
+from math import exp
+
 def manhattandist(a, b):
 	result = abs(a[0] - b[0]) + abs(a[1] - b[1])
 	return result
@@ -8,12 +10,20 @@ def h(start, goal):
 def tupleequal(x, y):
 	return x[0] == y[0] and x[1] == y[1]
 
+def normallogistic(x):
+	result = 1.0/(1.0 + exp(-1.0 * x))
+	return result
+
+def gravitycost(current, nextval):
+	result = normallogistic(nextval - current)
+	return result
+
 def reconstruct_path(cameFrom, current):
-	totalpath = [] # don't include current position
+	totalpath = [current] # include current position
 	while current in cameFrom:
 		current = cameFrom[current]
 		totalpath.insert(0, current)
-	return totalpath[1:]
+	return totalpath[:]
 
 '''
 mapobj.neighbors(pos) returns 
@@ -54,8 +64,8 @@ def astar(start, goal, mapobj, *noisegrids):
 				continue
 			if n not in gScore:
 				gScore[n] = mapobj.size * 10
-			cost_at_n = max(sumnoise.get(n[0], n[1]) - startnoise, 0.001)
-			t_gScore = gScore[current] + 1 ################################
+			cost_at_n = abs(sumnoise.get(n[0], n[1]) - startnoise)
+			t_gScore = gScore[current] + cost_at_n
 			if n not in openset:
 				openset.append(n)
 			elif t_gScore >= gScore[n]:

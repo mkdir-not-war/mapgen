@@ -33,6 +33,13 @@ class NoiseGrid():
 		result.amplitude = self.amplitude + noisegrid.amplitude
 		return result
 
+	def scale(self, scalar):
+		result = NoiseGrid(self.size, self.precision, False)
+		for i in range(result.size**2):
+			result.tiles[i] = self.tiles[i]*scalar
+		result.amplitude = self.amplitude*scalar
+		return result
+
 	def translate(self, x, y):
 		# x, y is new top left
 		result = NoiseGrid(self.size, self.precision, False)
