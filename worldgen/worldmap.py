@@ -526,7 +526,7 @@ class WorldMap():
 				if (tile.biome == 'mountain'):
 					if (len(
 						self.adjacenttiles(
-							x, y, True, ['water', 'ice cap'])) >= 8):
+							x, y, True, ['water', 'ice cap'])) >= 7):
 						tile.biome = 'volcano'
 
 		# transition from deserts into steppes

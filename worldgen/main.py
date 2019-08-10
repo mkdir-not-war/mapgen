@@ -73,7 +73,9 @@ def printregion(root, con, region, adjregions):
 				fgcolor = None
 				bgcolor = None
 				tile = tiles[regdir]
-				if (tile.allwater):
+				if (tile.debugflag):
+					bgcolor = colors.get('white')
+				elif (tile.allwater):
 					bgcolor = colors.get('water')
 					if (((x+y) % 7 == 0 or x % 9 == 1) and 
 						(y % 5 == 0 or y % 8 == 1)):

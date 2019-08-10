@@ -7,6 +7,7 @@ def colormult(c1, c2):
 
 colors = {
 	'black': libtcod.black,
+	'white': libtcod.white,
 	'ground': libtcod.Color(204, 120, 96),
 	'mountain': libtcod.Color(179, 51, 16),
 	'water': colormult(libtcod.desaturated_blue, libtcod.lighter_grey),

@@ -21,6 +21,8 @@ MAXELEVATIONLINETILES = 6
 
 class RegionTile():
 	def __init__(self, x, y):
+		self.debugflag = False
+
 		self.allwater = False # use to just cover with water (ocean, lake)
 		self.islava = False # use in the center of volcano regions
 		self.coastdirs = []	# use to make coastlines for oceans and lakes
@@ -108,8 +110,24 @@ class RegionMap():
 		result = self.tiles[x + self.width * y]
 		return result
 
-	def neighbors(self, pos):
-		return self.adjacenttiles(pos[0], pos[1])
+	def inbounds(self, x, y):
+		result = (x >= 0 and
+			x < self.width and
+			y >= 0 and
+			y < self.height)
+		return result
+
+	def setneighbors(self, diag):
+		if (diag):
+			self.neighbors = self.diagneighbors
+		else:
+			self.neighbors = self.cardneighbors
+
+	def diagneighbors(self, pos):
+		return self.adjacenttiles(pos[0], pos[1], True)
+
+	def cardneighbors(self, pos):
+		return self.adjacenttiles(pos[0], pos[1], False)
 
 	def adjacenttiles(self, x, y, diag=False):
 		result = []
@@ -201,6 +219,10 @@ class RegionMap():
 				path = []
 				for waterdir in waterdirections:
 					start, stop = self.coaststartstop(waterdir)
+					if (not 0 in waterdir):
+						self.setneighbors(False)
+					else:
+						self.setneighbors(True)
 					path = astar(start, stop, self, terrainnoise)
 					for pos in path:
 						self.regiontile(*pos).allwater = True
@@ -208,11 +230,7 @@ class RegionMap():
 						newpos = (
 							pos[0]+waterdir[0]*dist, 
 							pos[1]+waterdir[1]*dist)
-						while (
-							newpos[0] >= 0 and
-							newpos[0] < self.width and
-							newpos[1] >= 0 and
-							newpos[1] < self.height):
+						while (self.inbounds(*newpos)):
 							self.regiontile(*newpos).allwater = True
 							dist += 1
 							newpos = (
