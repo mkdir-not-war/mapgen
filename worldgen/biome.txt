@@ -61,16 +61,13 @@
     	}, 
     	"changesperday" : 6
 	},
-
-
-
 	"mediterranean" : {
 		"forestdensity" : 0.6,
     	"numrivers" : 3,
     	"numlakes" : 1,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.7,
+    		"rain" : 0.3
     	}, 
     	"changesperday" : 6
 	},	
@@ -79,48 +76,49 @@
     	"numrivers" : 3,
     	"numlakes" : 2,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.4,
+    		"rain" : 0.6
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 8
 	},	
 	"oceanic" : {
 		"forestdensity" : 0.7,
     	"numrivers" : 4,
     	"numlakes" : 4,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.5,
+    		"rain" : 0.5
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 8
 	},	
 	"coastal temp rainforest" : {
 		"forestdensity" : 0.95,
     	"numrivers" : 5,
     	"numlakes" : 4,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.1,
+    		"rain" : 0.9
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 12
 	},
 	"cold desert" : {
 		"forestdensity" : 0.0,
     	"numrivers" : 0,
     	"numlakes" : 0,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.95,
+    		"duststorm" : 0.05
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 8
 	},	
 	"cold steppe" : {
 		"forestdensity" : 0.1,
     	"numrivers" : 1,
     	"numlakes" : 1,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.88,
+    		"rain" : 0.02,
+    		"snow" : 0.1
     	}, 
     	"changesperday" : 6
 	},	
@@ -129,10 +127,10 @@
     	"numrivers" : 1,
     	"numlakes" : 4,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.8,
+    		"snow" : 0.2
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 12
 	},	
 	"ice cap" : {
 		"forestdensity" : 0.0,
@@ -140,7 +138,8 @@
     	"numlakes" : 0,
     	"weather" : {
     		"clear" : 0.2,
-    		"rain" : 0.8
+    		"snow" : 0.6,
+    		"blizzard" : 0.2
     	}, 
     	"changesperday" : 6
 	},
@@ -159,19 +158,18 @@
     	"numrivers" : 0,
     	"numlakes" : 0,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 0.9,
+    		"snow" : 0.1
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 4
 	},
 	"mountain" : {
 		"forestdensity" : 0.4,
     	"numrivers" : 2,
     	"numlakes" : 2,
     	"weather" : {
-    		"clear" : 0.2,
-    		"rain" : 0.8
+    		"clear" : 1.0
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 1
 	}
 }
