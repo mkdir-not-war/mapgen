@@ -81,6 +81,10 @@ def printregion(root, con, region, adjregions):
 						(y % 5 == 0 or y % 8 == 1)):
 						printchar = '~'
 						fgcolor = colors.get('waterfg')
+				elif (tile.islava):
+					bgcolor = colors.get('volcano')
+					printchar = '~'
+					fgcolor = colors.get('hot desert')
 				else:
 					bgcolor = colors.get('ground')
 					if (tile.elevationdir):

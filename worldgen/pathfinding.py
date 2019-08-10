@@ -14,8 +14,10 @@ def vectorsbyclosestangle(target, vecs):
 	for v in vecs:
 		dotprod = dot(v, target)
 		value = (dotprod * dotprod) / (squaredlen(v) * sqlen_target)
-		square_cos[v] = value
-	return max(square_cos.items(), key=itemgetter(1))
+		if (dotprod < 0):
+			value *= -1
+		square_cos[v] = value	
+	return max(square_cos.items(), key=itemgetter(1))[0]
 
 def manhattandist(a, b):
 	result = abs(a[0] - b[0]) + abs(a[1] - b[1])

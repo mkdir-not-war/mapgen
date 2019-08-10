@@ -14,13 +14,14 @@ pois = [
 ]
 
 # elevation/terrain
-MAX_MOUNTS = 1#12
-MIN_MOUNTS = 1#8
+MAX_MOUNTS = 5#12
+MIN_MOUNTS = 3#8
 TILES2COAST_CONN = 5
 TILES2ELEV_CONN = 8
-MAX_MOUNTLAYERS = 6
+MAX_MOUNTLAYERS = 4
 MIN_MOUNTLAYERS = 2
 MOUNTLAYER_WIDTH = 3
+VOLCANO_LAYERS = 8
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -214,6 +215,7 @@ class RegionMap():
 		else:
 			terrainnoise = self.noisegrids[0].add(self.tnoisegrids[0])
 			terrainnoise = terrainnoise.scale(4)
+			terrainnoise = terrainnoise.sizedown(2)
 
 			# first, do coasts and general dist2coast
 			'''
@@ -279,13 +281,14 @@ class RegionMap():
 							pos[1]+downslopedir[1]*dist)
 
 			# second, do hills and mountains
-			if (self.biome in ['mountain', 'polar']):
+			if (self.biome in ['mountain', 'polar', 'volcano']):
 				nummounts = MIN_MOUNTS + int(
 					(MAX_MOUNTS-MIN_MOUNTS) * \
-					terrainnoise.tiles[self.pindex])
+					terrainnoise.tiles[0])
+				if (self.biome == 'volcano'):
+					nummounts = 1
 				peaks = terrainnoise.extremes(
-					mindist=2, buffer=5, num=nummounts)
-				peaks = [peak for peak in peaks if inbounds(peak, 10)]
+					mindist=2, buffer=10, num=nummounts)
 
 				mountlayers = []
 				for i in range(nummounts):
@@ -295,13 +298,16 @@ class RegionMap():
 						self.tnoisegrids[0].tiles[i * \
 							self.tnoisegrids[0].size // 2] // \
 						self.tnoisegrids[0].amplitude)
-					radius = 1
+					if (self.biome == 'volcano'):
+						numlayers = VOLCANO_LAYERS
+					radius = MOUNTLAYER_WIDTH+0.2
 					for j in range(numlayers):
 						mountlayers.append([x, y, radius])
-						radius += 2
+						radius += 1
 
-				print(peaks)
-
+				if (self.biome == 'volcano'):
+					self.regiontile(
+						mountlayers[0][0], mountlayers[0][1]).islava = True
 				for y in range(self.height):
 					for x in range(self.width):
 						for layer in mountlayers:
@@ -311,15 +317,13 @@ class RegionMap():
 									self.regiontile(x, y).allwater = False
 								if (abs(xysq - layer[2]**2) <= \
 									MOUNTLAYER_WIDTH**2):
-									diff = (
-										float(x)-float(layer[0]), 
-										float(y)-float(layer[1]))
+									diff = (x-layer[0], y-layer[1])
 									vec = vectorsbyclosestangle(
 										diff,
 										[(1,0), (-1,0),
 										(0,1), (0,-1),
 										(1,1), (-1,1),
-										(1,-1), (-1,-1)])[0]
+										(1,-1), (-1,-1)])
 									self.regiontile(x, y).elevationdir = vec
 
 			else:
