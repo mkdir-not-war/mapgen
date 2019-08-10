@@ -10,11 +10,16 @@ def bilerp(x, y, a, b, c, d):
 		)
 
 class NoiseGrid():
-	def __init__(self, size=64, precision=4):
+	def __init__(self, size=64, precision=4, gentiles=True):
 		self.size = size
 		self.amplitude = 1
 		self.precision = precision
-		self.tiles = self.generate()
+
+		self.tiles = []
+		if (gentiles):
+			self.tiles = self.generate()
+		else:
+			self.tiles = [0.0] * self.size**2
 
 	def get(self, x, y):
 		result = self.tiles[x + self.size * y]
@@ -22,10 +27,21 @@ class NoiseGrid():
 
 	# assume same size & precision?
 	def add(self, noisegrid):
-		result = NoiseGrid(self.size, self.precision)
+		result = NoiseGrid(self.size, self.precision, False)
 		for i in range(result.size**2):
 			result.tiles[i] = self.tiles[i] + noisegrid.tiles[i]
 		result.amplitude = self.amplitude + noisegrid.amplitude
+		return result
+
+	def translate(self, x, y):
+		# x, y is new top left
+		result = NoiseGrid(self.size, self.precision, False)
+		result.tiles = [0] * self.size**2
+		for j in range(self.size):
+			for i in range(self.size):
+				val = self.tiles[((i+x)%self.size) + \
+					self.size * ((j+y)%self.size)]
+				result.tiles[i + self.size * j] = val
 		return result
 
 	def generate(self):
@@ -68,7 +84,8 @@ class NoiseGrid():
 					y-buffer >= 0):
 					sortednoise.append((self.get(x, y), (x, y)))
 
-		sortednoise = sorted(sortednoise, key=lambda x: x[0], reverse=(minmax=='max'))
+		sortednoise = sorted(
+			sortednoise, key=lambda x: x[0], reverse=(minmax=='max'))
 
 		#threshold = 0.8
 		#sortednoise = filter(lambda x: x[0]/self.amplitude>=threshold, sortednoise)
@@ -89,7 +106,7 @@ class NoiseGrid():
 ###################################################### DEBUG STUFF ###############
 
 # print R code
-def printgrid(grid):
+def printgridcode(grid):
 	GRID_WIDTH = GRID_HEIGHT = grid.size
 	for y in range(GRID_HEIGHT):
 		line = ','.join(
@@ -101,6 +118,14 @@ def printgrid(grid):
 		GRID_HEIGHT))
 	print('image(result)')
 
+def printgrid(grid):
+	GRID_WIDTH = GRID_HEIGHT = grid.size
+	for y in range(GRID_HEIGHT):
+		line = ' '.join(
+			['{0:.1f}'.format(x) for x in grid.tiles[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
+		print(line)
+	print()
+
 def main():
 	while(1):
 		seed = int(input("seed: "))
@@ -108,7 +133,7 @@ def main():
 		grid = NoiseGrid(16, 3)
 		grid2 = NoiseGrid(16, 3)
 		sumgrid = grid.add(grid2)
-		printgrid(sumgrid)
+		printgridcode(sumgrid)
 		print()
 
 		ext = sumgrid.extremes(minmax='min', mindist=4, buffer=2, num=4)

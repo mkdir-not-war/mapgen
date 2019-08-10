@@ -1,0 +1,177 @@
+{
+    "tropical rainforest" : {
+    	"forestdensity" : 0.95,
+    	"numrivers" : 5,
+    	"numlakes" : 4,
+    	"weather" : {
+    		"clear" : 0.4,
+    		"rain" : 0.6
+    	}, 
+    	"changesperday" : 12
+    },
+	"tropical savannah" : {
+		"forestdensity" : 0.4,
+    	"numrivers" : 2,
+    	"numlakes" : 1,
+    	"weather" : {
+    		"clear" : 0.8,
+    		"rain" : 0.2
+    	}, 
+    	"changesperday" : 4
+	},
+	"hot desert" : {
+		"forestdensity" : 0.0,
+    	"numrivers" : 0,
+    	"numlakes" : 0,
+    	"weather" : {
+    		"clear" : 0.96,
+    		"duststorm" : 0.04
+    	}, 
+    	"changesperday" : 12
+	},	
+	"hot steppe" : {
+		"forestdensity" : 0.1,
+    	"numrivers" : 1,
+    	"numlakes" : 0,
+    	"weather" : {
+    		"clear" : 0.9,
+    		"rain" : 0.1
+    	}, 
+    	"changesperday" : 12
+	},	
+	"humid continental" : {
+		"forestdensity" : 0.5,
+    	"numrivers" : 3,
+    	"numlakes" : 3,
+    	"weather" : {
+    		"clear" : 0.75,
+    		"rain" : 0.2,
+    		"snow" : 0.05
+    	}, 
+    	"changesperday" : 8
+	},	
+	"subarctic continental" : {
+		"forestdensity" : 0.8,
+    	"numrivers" : 2,
+    	"numlakes" : 3,
+    	"weather" : {
+    		"clear" : 0.85,
+    		"rain" : 0.05,
+    		"snow" : 0.1
+    	}, 
+    	"changesperday" : 6
+	},
+
+
+
+	"mediterranean" : {
+		"forestdensity" : 0.6,
+    	"numrivers" : 3,
+    	"numlakes" : 1,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},	
+	"humid subtropical" : {
+		"forestdensity" : 0.7,
+    	"numrivers" : 3,
+    	"numlakes" : 2,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},	
+	"oceanic" : {
+		"forestdensity" : 0.7,
+    	"numrivers" : 4,
+    	"numlakes" : 4,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},	
+	"coastal temp rainforest" : {
+		"forestdensity" : 0.95,
+    	"numrivers" : 5,
+    	"numlakes" : 4,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},
+	"cold desert" : {
+		"forestdensity" : 0.0,
+    	"numrivers" : 0,
+    	"numlakes" : 0,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},	
+	"cold steppe" : {
+		"forestdensity" : 0.1,
+    	"numrivers" : 1,
+    	"numlakes" : 1,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},	
+	"tundra" : {
+		"forestdensity" : 0.02,
+    	"numrivers" : 1,
+    	"numlakes" : 4,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},	
+	"ice cap" : {
+		"forestdensity" : 0.0,
+    	"numrivers" : 0,
+    	"numlakes" : 0,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},
+	"volcano" : {
+		"forestdensity" : 0.0,
+    	"numrivers" : 4,
+    	"numlakes" : 0,
+    	"weather" : {
+    		"clear" : 0.8,
+    		"ash" : 0.2
+    	}, 
+    	"changesperday" : 12
+	},
+	"polar" : {
+		"forestdensity" : 0.0,
+    	"numrivers" : 0,
+    	"numlakes" : 0,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	},
+	"mountain" : {
+		"forestdensity" : 0.4,
+    	"numrivers" : 2,
+    	"numlakes" : 2,
+    	"weather" : {
+    		"clear" : 0.2,
+    		"rain" : 0.8
+    	}, 
+    	"changesperday" : 6
+	}
+}

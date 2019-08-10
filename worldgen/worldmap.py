@@ -513,6 +513,8 @@ class WorldMap():
 
 				# polar ice caps
 				if (tile.biome == 'water'):
+					tile.dist2coast = 0
+					tile.dir2coast = (0, 0)
 					if (choices([True, False], [ice_prob, 1.0-ice_prob])[0]):
 						tile.biome = 'ice cap'
 

@@ -129,15 +129,10 @@ def main():
 						mapy >= 0 and
 						mapy < map_height):
 
-						tile = world.worldtile(mapx, mapy)
 						if event.button == libtcod.event.BUTTON_LEFT:
-							pindex = tile.position[0] + map_width * tile.position[1]
 							region = RegionMap(
-								pindex, 
-								tile, 
-								world.adjacenttiles(
-									tile.position[0], 
-									tile.position[1]),
+								mapx, mapy, 
+								world,
 								[p1, p2, p3])
 							viewstate = ViewState.REGION
 						else:
