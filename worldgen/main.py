@@ -67,11 +67,11 @@ def printregion(root, con, region, adjregions):
 			tiles[(0, 0)] = region.regiontile(x, y)
 			for regdir in adjregions:
 				tiles[regdir] = adjregions[regdir].regiontile(x, y)
-
-			printchar = '+'
-			fgcolor = None
-			bgcolor = None
+		
 			for regdir in tiles:
+				printchar = '+'
+				fgcolor = None
+				bgcolor = None
 				tile = tiles[regdir]
 				if (tile.allwater):
 					bgcolor = colors.get('water')
@@ -165,6 +165,9 @@ def main():
 								noisegrids,
 								regionside=regionside)
 							viewstate = ViewState.REGION
+							con.clear()
+							printUI(con, world, region, viewstate)
+							libtcod.console_flush()
 						else:
 							print(event.button)
 				elif event.type == "KEYDOWN":

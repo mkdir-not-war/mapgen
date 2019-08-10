@@ -15,7 +15,14 @@ def reconstruct_path(cameFrom, current):
 		totalpath.insert(0, current)
 	return totalpath[1:]
 
-def astar(start, goal, tilemap, *noisegrids):
+'''
+mapobj.neighbors(pos) returns 
+list of tuples that neighbor position pos
+
+mapobj.size returns
+size of tilemap
+'''
+def astar(start, goal, mapobj, *noisegrids):
 	sumnoise = noisegrids[0]
 	for n in noisegrids[1:]:
 		sumnoise = sumnoise.add(n)
@@ -42,13 +49,13 @@ def astar(start, goal, tilemap, *noisegrids):
 		openset = openset[:currenti] + openset[currenti+1:]
 		closedset.append(current)
 
-		for n in neighbors(current, tilemap):
+		for n in mapobj.neighbors(current):
 			if n in closedset:
 				continue
 			if n not in gScore:
-				gScore[n] = len(tilemap) * 10
+				gScore[n] = mapobj.size * 10
 			cost_at_n = max(sumnoise.get(n[0], n[1]) - startnoise, 0.001)
-			t_gScore = gScore[current] + cost_at_n
+			t_gScore = gScore[current] + 1 ################################
 			if n not in openset:
 				openset.append(n)
 			elif t_gScore >= gScore[n]:

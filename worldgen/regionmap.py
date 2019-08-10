@@ -35,10 +35,15 @@ class RegionTile():
 class RegionMap():
 	def __init__(self, x, y, world, noisegrids, regionside):
 		self.width = self.height = regionside
+		self.size = regionside**2
 
 		self.worldpos = (x, y)
 		worldtile = world.worldtile(x, y)
-		adjtiles = world.adjacenttiles(x, y)
+		adjpos = world.adjacenttiles(x, y, True)
+		adjtiles = {}
+		for pos in adjpos:
+			relpos = (pos[0]-x, pos[1]-y)
+			adjtiles[relpos] = world.worldtile(pos[0], pos[1])
 
 		# use to query noisegrids
 		self.pindex = worldtile.position[0] + \
@@ -103,6 +108,73 @@ class RegionMap():
 		result = self.tiles[x + self.width * y]
 		return result
 
+	def neighbors(self, pos):
+		return self.adjacenttiles(pos[0], pos[1])
+
+	def adjacenttiles(self, x, y, diag=False):
+		result = []
+
+		xplus = x+1
+		xminus = x-1
+		if (xminus < 0):
+			xminus = None
+		if (xplus >= self.width):
+			xplus = None
+
+		yplus = y+1
+		yminus = y-1
+		if (yminus < 0):
+			yminus = None
+		if (yplus >= self.height):
+			yplus = None
+
+		if (not xplus is None):
+			result.append((xplus, y))
+		if (not xminus is None):
+			result.append((xminus, y))
+		if (not yplus is None):
+			result.append((x, yplus))
+		if (not yminus is None):
+			result.append((x, yminus))
+
+		if (diag):
+			if (not yplus is None):
+				if (not xplus is None):
+					result.append((xplus, yplus))
+				if (not xminus is None):
+					result.append((xminus, yplus))
+			if (not yminus is None):
+				if (not xplus is None):
+					result.append((xplus, yminus))
+				if (not xminus is None):
+					result.append((xminus, yminus))
+
+		return result
+
+	def coaststartstop(self, waterdir):
+		w = self.width-1
+		h = self.height-1
+		d = TILES2COAST_CONN
+
+		if (waterdir == (1,0)):
+			return (w-d, h), (w-d, 0)
+		elif (waterdir == (0, -1)):
+			return (0, d), (w, d)
+
+		elif (waterdir == (0, 1)):
+			return (0, h-d), (w, h-d)
+		elif (waterdir == (-1, 0)):
+			return (d, h), (d, 0)
+		
+		elif (waterdir == (1, 1)):
+			return (w-d, h), (w, h-d)
+		elif (waterdir == (-1, 1)):
+			return (0, h-d), (d, h)
+		elif (waterdir == (1, -1)):
+			return (w, d), (w-d, 0)
+		elif (waterdir == (-1, -1)):
+			return (0, d), (d, 0)
+
 	def genvolcanoregion(self):
 		pass
 
@@ -122,12 +194,12 @@ class RegionMap():
 				# special case for volcanos
 				self.genvolcanoregion()
 				return
-			elif (self.elevation == 1):
+			elif (self.elevation < 2):
 				# coastal, adjacent
-				pass
-			elif (self.elevation == 1.4):
-				# coastal, diagonal
-				pass
+				waterdirections = [direction for direction in adjtiles if (adjtiles[direction].biome == 'water')]
+				for waterdir in waterdirections:
+					start, stop = self.coaststartstop(waterdir)
+					path = astar(start, stop, self, terrainnoise)
 			else:
 				# non-coastal, do general elevation lines
 				pass

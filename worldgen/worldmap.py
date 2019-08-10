@@ -14,7 +14,6 @@ ELEVATION_EROSION = 0.003
 MIN_MOUNTS = 12
 NUM_POLARS = 4
 COASTAL_DIST = 2
-STEPPE_FREQ = 0.9
 WIND_HADLEY_BLOWOVER = 10
 
 class WorldTile():
@@ -65,22 +64,25 @@ class WorldMap():
 
 	def adjacenttiles(self, x, y, diag=False, biomes=None):
 		result = []
+
 		xplus = x+1
-		if (xplus >= self.map_width):
-			xplus = 0
 		xminus = x-1
 		if (xminus < 0):
 			xminus = self.map_width-1
+		if (xplus >= self.map_width):
+			xplus = 0
 
 		yplus = y+1
 		yminus = y-1
-		if (y == 0):
+		if (yminus < 0):
 			yminus = None
-		if (y == self.map_height-1):
+		if (yplus >= self.map_height):
 			yplus = None
 
-		result.append((xplus, y))
-		result.append((xminus, y))
+		if (not xplus is None):
+			result.append((xplus, y))
+		if (not xminus is None):
+			result.append((xminus, y))
 		if (not yplus is None):
 			result.append((x, yplus))
 		if (not yminus is None):
@@ -88,11 +90,15 @@ class WorldMap():
 
 		if (diag):
 			if (not yplus is None):
-				result.append((xplus, yplus))
-				result.append((xminus, yplus))
+				if (not xplus is None):
+					result.append((xplus, yplus))
+				if (not xminus is None):
+					result.append((xminus, yplus))
 			if (not yminus is None):
-				result.append((xplus, yminus))
-				result.append((xminus, yminus))
+				if (not xplus is None):
+					result.append((xplus, yminus))
+				if (not xminus is None):
+					result.append((xminus, yminus))
 
 		if (not biomes is None):
 			result = [tile for tile in result \
@@ -456,22 +462,20 @@ class WorldMap():
 						'humid subtropical',
 						'humid continental',
 						'subarctic continental']):
-					FREQ = STEPPE_FREQ
-					if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
-						newmap[(x, y)] = 'cold steppe'
+					newmap[(x, y)] = 'cold steppe'
+
 		for y in range(self.map_height):
 			for x in range(self.map_width):
 				adjtiles = self.adjacenttiles(x, y, True)
 				adjbiomes = [self.worldtile(*tile).biome for tile in adjtiles]
 				if ('hot desert' in adjbiomes and
-					self.worldtile(x, y) in [
+					self.worldtile(x, y).biome in [
+						'mediterranean',
 						'tropical savannah',
 						'humid subtropical',
 						'humid continental',
 						'tropical rainforest']):
-					FREQ = STEPPE_FREQ
-					if (choices([True, False], [STEPPE_FREQ, 1.0-STEPPE_FREQ])[0]):
-						newmap[(x, y)] = 'hot steppe'
+					newmap[(x, y)] = 'hot steppe'
 
 		# copy new biomes over
 		for x, y in newmap:
