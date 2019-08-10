@@ -1,4 +1,21 @@
 from math import exp
+from numpy import dot
+from operator import itemgetter
+
+def squaredlen(vec):
+	result = 0
+	for d in vec:
+		result += d ** 2
+	return result
+
+def vectorsbyclosestangle(target, vecs):
+	square_cos = {}
+	sqlen_target = squaredlen(target)
+	for v in vecs:
+		dotprod = dot(v, target)
+		value = (dotprod * dotprod) / (squaredlen(v) * sqlen_target)
+		square_cos[v] = value
+	return max(square_cos.items(), key=itemgetter(1))
 
 def manhattandist(a, b):
 	result = abs(a[0] - b[0]) + abs(a[1] - b[1])

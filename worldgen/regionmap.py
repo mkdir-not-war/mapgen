@@ -1,4 +1,4 @@
-from pathfinding import astar
+from pathfinding import astar, vectorsbyclosestangle
 from dataloader import getdata
 from random import choices
 
@@ -14,10 +14,13 @@ pois = [
 ]
 
 # elevation/terrain
-MAX_MOUNTS = 12
-MIN_MOUNTS = 8
-TILES2COAST_CONN = 6
-MAXCONCENTRICELEVATION = 6
+MAX_MOUNTS = 1#12
+MIN_MOUNTS = 1#8
+TILES2COAST_CONN = 5
+TILES2ELEV_CONN = 8
+MAX_MOUNTLAYERS = 6
+MIN_MOUNTLAYERS = 2
+MOUNTLAYER_WIDTH = 3
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -114,11 +117,11 @@ class RegionMap():
 		result = self.tiles[x + self.width * y]
 		return result
 
-	def inbounds(self, x, y):
-		result = (x >= 0 and
-			x < self.width and
-			y >= 0 and
-			y < self.height)
+	def inbounds(self, x, y, buffer=0):
+		result = (x-buffer >= 0 and
+			x+buffer < self.width and
+			y-buffer >= 0 and
+			y+buffer < self.height)
 		return result
 
 	def setneighbors(self, diag):
@@ -173,10 +176,10 @@ class RegionMap():
 
 		return result
 
-	def coaststartstop(self, waterdir):
+	def coaststartstop(self, waterdir, buffer):
 		w = self.width-1
 		h = self.height-1
-		d = TILES2COAST_CONN
+		d = buffer
 
 		if (waterdir == (1,0)):
 			return (w-d, h), (w-d, 0)
@@ -213,18 +216,20 @@ class RegionMap():
 			terrainnoise = terrainnoise.scale(4)
 
 			# first, do coasts and general dist2coast
+			'''
 			if (self.biome == 'volcano'):
 				# special case for volcanos
 				self.genvolcanoregion()
 				return
-			elif (self.dist2coast < 2):
+			'''
+
+			if (self.dist2coast < 2):
 				# coastal, adjacent
 				waterdirections = [direction \
 					for direction in adjtiles \
 					if (adjtiles[direction].biome == 'water')]
-				path = []
 				for waterdir in waterdirections:
-					start, stop = self.coaststartstop(waterdir)
+					start, stop = self.coaststartstop(waterdir, TILES2COAST_CONN)
 					if (not 0 in waterdir):
 						self.setneighbors(False)
 					else:
@@ -242,45 +247,83 @@ class RegionMap():
 							newpos = (
 								pos[0]+waterdir[0]*dist, 
 								pos[1]+waterdir[1]*dist)
-			else:
-				# non-coastal, do general elevation lines
-				# only carindal directions
-				downslopedirections = [direction \
-					for direction in adjtiles \
-					if (adjtiles[direction].dist2coast < self.dist2coast) and
-					0 in direction]
-				path = []
-				self.setneighbors(True)
-				for downslopedir in downslopedirections:
-					start, stop = self.coaststartstop(downslopedir)
-					path = astar(start, stop, self, terrainnoise)
-					for pos in path:
-						self.regiontile(*pos).elevationdir = downslopedir
-						dist = 1
+			
+			# do general elevation lines
+			# only interested in cardinal direction adjacent tiles
+			downslopedirections = [direction \
+				for direction in adjtiles \
+				if (adjtiles[direction].dist2coast < self.dist2coast) and
+				0 in direction]
+			self.setneighbors(True)
+			for downslopedir in downslopedirections:
+				start, stop = self.coaststartstop(downslopedir, TILES2ELEV_CONN)
+				path = astar(start, stop, self, terrainnoise)
+				for pos in path:
+					if (self.regiontile(*pos).allwater):
+						continue
+					self.regiontile(*pos).elevationdir = downslopedir
+					dist = 1
+					newpos = (
+						pos[0]+downslopedir[0]*dist, 
+						pos[1]+downslopedir[1]*dist)
+					while (self.inbounds(*newpos)):
+						if (terrainnoise.get(*newpos) > 
+							terrainnoise.amplitude / 4.0):
+							self.regiontile(*newpos).elevationdir = None
+						else:
+							self.regiontile(*newpos).elevationdir = \
+								downslopedir
+						dist += 1
 						newpos = (
 							pos[0]+downslopedir[0]*dist, 
 							pos[1]+downslopedir[1]*dist)
-						while (self.inbounds(*newpos)):
-							if (terrainnoise.get(*newpos) > 
-								terrainnoise.amplitude / 4.0):
-								self.regiontile(*newpos).elevationdir = None
-							else:
-								self.regiontile(*newpos).elevationdir = \
-									downslopedir
-							dist += 1
-							newpos = (
-								pos[0]+downslopedir[0]*dist, 
-								pos[1]+downslopedir[1]*dist)
 
 			# second, do hills and mountains
 			if (self.biome in ['mountain', 'polar']):
 				nummounts = MIN_MOUNTS + int(
 					(MAX_MOUNTS-MIN_MOUNTS) * \
-					self.noisegrids[0].tiles[self.pindex])
-				peaks = self.noisegrids[0].extremes(
+					terrainnoise.tiles[self.pindex])
+				peaks = terrainnoise.extremes(
 					mindist=2, buffer=5, num=nummounts)
+				peaks = [peak for peak in peaks if inbounds(peak, 10)]
+
+				mountlayers = []
+				for i in range(nummounts):
+					x, y = peaks[i]
+					numlayers = MIN_MOUNTLAYERS + int(
+						(MAX_MOUNTLAYERS-MIN_MOUNTLAYERS) * \
+						self.tnoisegrids[0].tiles[i * \
+							self.tnoisegrids[0].size // 2] // \
+						self.tnoisegrids[0].amplitude)
+					radius = 1
+					for j in range(numlayers):
+						mountlayers.append([x, y, radius])
+						radius += 2
+
 				print(peaks)
+
+				for y in range(self.height):
+					for x in range(self.width):
+						for layer in mountlayers:
+							xysq = (x-layer[0])**2 + (y-layer[1])**2
+							if (xysq <= layer[2]**2):
+								if (self.regiontile(x, y).allwater):
+									self.regiontile(x, y).allwater = False
+								if (abs(xysq - layer[2]**2) <= \
+									MOUNTLAYER_WIDTH**2):
+									diff = (
+										float(x)-float(layer[0]), 
+										float(y)-float(layer[1]))
+									vec = vectorsbyclosestangle(
+										diff,
+										[(1,0), (-1,0),
+										(0,1), (0,-1),
+										(1,1), (-1,1),
+										(1,-1), (-1,-1)])[0]
+									self.regiontile(x, y).elevationdir = vec
+
 			else:
+				# hills only have 1 layer
 				pass
 
 			# third, do rivers

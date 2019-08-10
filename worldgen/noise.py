@@ -40,6 +40,20 @@ class NoiseGrid():
 		result.amplitude = self.amplitude*scalar
 		return result
 
+	def sizedown(self, scalefactor):
+		result = NoiseGrid(
+			self.size//scalefactor, self.precision, False)
+
+		GRID_WIDTH = GRID_HEIGHT = self.size
+
+		result.tiles.clear()
+		for y in list(range(GRID_HEIGHT))[::scalefactor]:
+			for x in list(range(GRID_WIDTH))[::scalefactor]:
+				result.tiles.append(
+					self.tiles[x + self.size * y])
+
+		return result
+
 	def translate(self, x, y):
 		# x, y is new top left
 		result = NoiseGrid(self.size, self.precision, False)
@@ -95,7 +109,9 @@ class NoiseGrid():
 			sortednoise, key=lambda x: x[0], reverse=(minmax=='max'))
 
 		#threshold = 0.8
-		#sortednoise = filter(lambda x: x[0]/self.amplitude>=threshold, sortednoise)
+		#sortednoise = filter(
+		#	lambda x: x[0]/self.amplitude>=threshold, 
+		#	sortednoise)
 
 		index = 0
 		while (len(result) < num):
@@ -110,14 +126,15 @@ class NoiseGrid():
 
 		return result
 
-###################################################### DEBUG STUFF ###############
+############################# DEBUG STUFF ###############
 
 # print R code
 def printgridcode(grid):
 	GRID_WIDTH = GRID_HEIGHT = grid.size
 	for y in range(GRID_HEIGHT):
 		line = ','.join(
-			['{0:.3f}'.format(x) for x in grid.tiles[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
+			['{0:.3f}'.format(x) \
+				for x in grid.tiles[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
 		print('v' + str(y) + ' <- c(' + line + ')')
 	print('result <- array(c(%s),dim = c(%d,%d))' % (
 		','.join(['v%d'%i for i in range(GRID_HEIGHT)]),
@@ -129,7 +146,8 @@ def printgrid(grid):
 	GRID_WIDTH = GRID_HEIGHT = grid.size
 	for y in range(GRID_HEIGHT):
 		line = ' '.join(
-			['{0:.1f}'.format(x) for x in grid.tiles[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
+			['{0:.1f}'.format(x) \
+				for x in grid.tiles[y*GRID_WIDTH:(y+1)*GRID_WIDTH]])
 		print(line)
 	print()
 
@@ -137,19 +155,13 @@ def main():
 	while(1):
 		seed = int(input("seed: "))
 		random.seed(seed)
-		grid = NoiseGrid(16, 3)
-		grid2 = NoiseGrid(16, 3)
-		sumgrid = grid.add(grid2)
-		printgridcode(sumgrid)
-		print()
-
-		ext = sumgrid.extremes(minmax='min', mindist=4, buffer=2, num=4)
-		for x, y in ext:
-			print(str(grid.get(x, y)) + '\t' + str((x, y)))
-
+		grid = NoiseGrid(32, 3)
+		printgridcode(grid)
+		grid16 = grid.sizedown(2)
+		printgridcode(grid16)
 
 
 if __name__=='__main__':
 	main()
 
-#####################################################################################
+############################################
