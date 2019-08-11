@@ -1,4 +1,4 @@
-from pathfinding import astar, vectorsbyclosestangle
+from pathfinding import astar, vectorsbyclosestangle, lerp
 from dataloader import getdata
 from random import choices
 from numpy import dot
@@ -40,11 +40,9 @@ class RegionTile():
 		self.poi = '' # determine to place a poi (only one allowed)
 		self.forest = False
 
-		# cardinal and diagonals (only cardinal at zoomed in level)
+		# cardinal and diagonals
 		self.elevationdir = None
 		self.roaddir = None	
-
-		# only cardinal (used to determine direction of flow)
 		self.riverdir = None 
 
 class RegionMap():
@@ -500,8 +498,14 @@ class RegionMap():
 								adjbiome != self.biome):
 								adjforestdensity = \
 									biomedata[adjbiome]['forestdensity']
-								borderforestdensity = (adjforestdensity + \
-									self.forestdensity) / 2.0
+								dist = min(
+									x, y, 
+									self.width-x,
+									self.height-y)
+								borderforestdensity = lerp(
+									self.forestdensity,
+									adjforestdensity,
+									float(dist)/FORESTBORDERBLEED)
 								if (p < adjforestdensity):
 									self.regiontile(x, y).forest = True
 

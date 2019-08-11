@@ -8,6 +8,10 @@ def squaredlen(vec):
 		result += d ** 2
 	return result
 
+def lerp(a, b, t):
+	result = a*(1-t) + t*b
+	return result
+
 def vectorsbyclosestangle(target, vecs):
 	square_cos = {}
 	sqlen_target = squaredlen(target)
