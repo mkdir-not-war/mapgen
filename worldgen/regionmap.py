@@ -28,6 +28,7 @@ RIVERSPAWNRADIUS = 12
 RIVERFORESTMOD = 1.5
 MOUNTSLOPEFORESTMOD = 2.0
 TOWNRIVERMOD = 1.6
+FORESTBORDERBLEED = 3
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -467,6 +468,7 @@ class RegionMap():
 					self.regiontile(*v).allwater = True
 
 			# last, do forests
+			cx, cy = (self.width//2, self.height//2)
 			for y in range(self.height):
 				for x in range(self.width):
 					p = 1.0 - terrainnoise.get(x, y)
@@ -483,6 +485,25 @@ class RegionMap():
 						p *= MOUNTSLOPEFORESTMOD
 					if (p < self.forestdensity):
 						self.regiontile(x, y).forest = True
+					elif (
+						x < FORESTBORDERBLEED or
+						x >= self.width - FORESTBORDERBLEED or
+						y < FORESTBORDERBLEED or
+						y >= self.height - FORESTBORDERBLEED):
+							diff = (x-cx, y-cy)
+							vec = vectorsbyclosestangle(
+								diff,
+								[(1,0), (-1,0),
+								(0,1), (0,-1)])
+							adjbiome = adjtiles[vec].biome
+							if (adjbiome in biomedata and
+								adjbiome != self.biome):
+								adjforestdensity = \
+									biomedata[adjbiome]['forestdensity']
+								borderforestdensity = (adjforestdensity + \
+									self.forestdensity) / 2.0
+								if (p < adjforestdensity):
+									self.regiontile(x, y).forest = True
 
 			##### END OF TERRAIN, BEGIN POIs AND METADATA ###########
 
@@ -497,12 +518,20 @@ class RegionMap():
 				for x in range(self.width):
 					if (self.regiontile(x, y).riverdir):
 						towngrid.tiles[x + towngrid.size * y] *= \
-							TOWNRIVERMOD #/ self.numtowns
+							TOWNRIVERMOD
+					if (self.regiontile(x, y).allwater):
+						adjwatertiles = self.adjacenttiles(x, y, True)
+						for tile in adjwatertiles:
+							if (not self.regiontile(*tile).allwater):
+								towngrid.tiles[
+									tile[0] + towngrid.size * tile[1]] *= \
+										TOWNRIVERMOD
 
 			townlocs = towngrid.extremes(
 				mindist=3, buffer=2, minmax='max', num=numtowns)
 			for x, y in townlocs:
-				self.regiontile(x, y).poi = 'town'
+				if (not self.regiontile(x, y).allwater):
+					self.regiontile(x, y).poi = 'town'
 
 			# second, do roads
 
