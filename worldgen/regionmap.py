@@ -15,8 +15,8 @@ pois = [
 ]
 
 # elevation/terrain
-MAX_MOUNTS = 5#12
-MIN_MOUNTS = 3#8
+MAX_MOUNTS = 5
+MIN_MOUNTS = 3
 TILES2COAST_CONN = 5
 TILES2ELEV_CONN = 8
 MAX_MOUNTLAYERS = 7
@@ -332,6 +332,8 @@ class RegionMap():
 											vec) > 0):
 
 										self.regiontile(x, y).elevationdir = vec
+								elif (xysq == 0):
+									self.regiontile(x, y).elevationdir = None
 
 			else:
 				# hills only have 1 layer
@@ -355,7 +357,6 @@ class RegionMap():
 										self.regiontile(x, y).allwater = False
 									if (abs(xysq - layer[2]**2) <= 2 and
 										xysq != 0):
-
 										diff = (x-layer[0], y-layer[1])
 										vec = vectorsbyclosestangle(
 											diff,
@@ -364,6 +365,8 @@ class RegionMap():
 											(1,1), (-1,1),
 											(1,-1), (-1,-1)])
 										self.regiontile(x, y).elevationdir = vec
+									elif (xysq == 0):
+										self.regiontile(x, y).elevationdir = None
 
 			# third, do rivers
 			if (self.biome != 'ice cap'):
@@ -371,9 +374,12 @@ class RegionMap():
 			else:
 				pass
 
+			# last, do forests
+
 			##### END OF TERRAIN, BEGIN POIs AND METADATA ###########
 
 			# first, do towns (no towns on ice caps for now)
+			# (clear out forests)
 
 			# second, do roads
 

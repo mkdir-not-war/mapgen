@@ -1,6 +1,6 @@
 {
     "tropical rainforest" : {
-    	"forestdensity" : 0.95,
+    	"forestdensity" : 0.98,
     	"numrivers" : 5,
     	"numlakes" : 4,
     	"weather" : {

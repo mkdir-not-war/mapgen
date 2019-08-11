@@ -458,6 +458,8 @@ class WorldMap():
 				adjbiomes = [self.worldtile(*tile).biome for tile in adjtiles]
 				if ('cold desert' in adjbiomes and
 					self.worldtile(x, y).biome in [
+						'hot desert',
+						'hot steppe',
 						'tropical savannah',
 						'humid subtropical',
 						'humid continental',
@@ -470,6 +472,8 @@ class WorldMap():
 				adjbiomes = [self.worldtile(*tile).biome for tile in adjtiles]
 				if ('hot desert' in adjbiomes and
 					self.worldtile(x, y).biome in [
+						'cold desert',
+						'cold steppe',
 						'mediterranean',
 						'tropical savannah',
 						'humid subtropical',
