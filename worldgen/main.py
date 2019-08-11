@@ -97,6 +97,16 @@ def printregion(root, con, region, adjregions):
 						elif (tile.elevationdir[0] < 0):
 							printchar = '<'
 						fgcolor = colors.get('mountain')
+					if (tile.riverdir):
+						if (tile.riverdir[1] > 0):
+							printchar = 'v'
+						elif (tile.riverdir[1] < 0):
+							printchar = '^'
+						if (tile.riverdir[0] > 0):
+							printchar = '>'
+						elif (tile.riverdir[0] < 0):
+							printchar = '<'
+						fgcolor = colors.get('water')
 				if fgcolor is None:
 					fgcolor = bgcolor
 				drawpos = (
