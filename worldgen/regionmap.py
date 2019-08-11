@@ -1,6 +1,7 @@
 from pathfinding import astar, vectorsbyclosestangle
 from dataloader import getdata
 from random import choices
+from numpy import dot
 
 biomedata = getdata('biome')
 
@@ -18,8 +19,8 @@ MAX_MOUNTS = 5#12
 MIN_MOUNTS = 3#8
 TILES2COAST_CONN = 5
 TILES2ELEV_CONN = 8
-MAX_MOUNTLAYERS = 4
-MIN_MOUNTLAYERS = 2
+MAX_MOUNTLAYERS = 7
+MIN_MOUNTLAYERS = 3
 MOUNTLAYER_WIDTH = 3
 VOLCANO_LAYERS = 8
 
@@ -102,6 +103,7 @@ class RegionMap():
 			changesperday = biomedata[self.biome]['changesperday']
 			self.refreshtimes = [i*24.0/changesperday \
 				for i in range(changesperday)]
+			self.numhills = 4#biomedata[self.biome]['numhills']
 
 		self.generateregion(adjtiles)
 
@@ -214,7 +216,6 @@ class RegionMap():
 			return
 		else:
 			terrainnoise = self.noisegrids[0].add(self.tnoisegrids[0])
-			terrainnoise = terrainnoise.scale(4)
 			terrainnoise = terrainnoise.sizedown(2)
 
 			# first, do coasts and general dist2coast
@@ -285,10 +286,12 @@ class RegionMap():
 				nummounts = MIN_MOUNTS + int(
 					(MAX_MOUNTS-MIN_MOUNTS) * \
 					terrainnoise.tiles[0])
+				buffer = 6
 				if (self.biome == 'volcano'):
 					nummounts = 1
+					buffer = 11
 				peaks = terrainnoise.extremes(
-					mindist=2, buffer=10, num=nummounts)
+					mindist=5, buffer=buffer, num=nummounts)
 
 				mountlayers = []
 				for i in range(nummounts):
@@ -324,11 +327,43 @@ class RegionMap():
 										(0,1), (0,-1),
 										(1,1), (-1,1),
 										(1,-1), (-1,-1)])
-									self.regiontile(x, y).elevationdir = vec
+									if (self.regiontile(x, y).elevationdir is None or
+										dot(self.regiontile(x, y).elevationdir, 
+											vec) > 0):
+
+										self.regiontile(x, y).elevationdir = vec
 
 			else:
 				# hills only have 1 layer
-				pass
+				numhills = int(self.numhills * terrainnoise.tiles[0])
+				if (numhills > 0):
+					peaks = terrainnoise.extremes(
+						mindist=5, buffer=6, num=numhills)
+
+					hilllayers = []
+					for i in range(numhills):
+						x, y = peaks[i]
+						radius = 1
+						hilllayers.append([x, y, radius])
+
+					for y in range(self.height):
+						for x in range(self.width):
+							for layer in hilllayers:
+								xysq = (x-layer[0])**2 + (y-layer[1])**2
+								if (xysq <= layer[2]**2):
+									if (self.regiontile(x, y).allwater):
+										self.regiontile(x, y).allwater = False
+									if (abs(xysq - layer[2]**2) <= 2 and
+										xysq != 0):
+
+										diff = (x-layer[0], y-layer[1])
+										vec = vectorsbyclosestangle(
+											diff,
+											[(1,0), (-1,0),
+											(0,1), (0,-1),
+											(1,1), (-1,1),
+											(1,-1), (-1,-1)])
+										self.regiontile(x, y).elevationdir = vec
 
 			# third, do rivers
 			if (self.biome != 'ice cap'):

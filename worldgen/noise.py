@@ -114,12 +114,14 @@ class NoiseGrid():
 		#	sortednoise)
 
 		index = 0
-		while (len(result) < num):
+		while (len(result) < num and index < len(sortednoise)):
 			val, pos = sortednoise[index]
+
 			tooclose = False
 			for pos2 in result:
-				if manhattandist(pos, pos2) <= buffer or tooclose:
+				if manhattandist(pos, pos2) <= mindist:
 					tooclose = True
+					break
 			if not tooclose:
 				result.append(pos)
 			index += 1
