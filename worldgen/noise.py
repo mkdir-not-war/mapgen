@@ -12,7 +12,6 @@ def bilerp(x, y, a, b, c, d):
 class NoiseGrid():
 	def __init__(self, size=64, precision=4, gentiles=True):
 		self.size = size
-		self.amplitude = 1
 		self.precision = precision
 
 		self.tiles = []
@@ -29,8 +28,7 @@ class NoiseGrid():
 	def add(self, noisegrid):
 		result = NoiseGrid(self.size, self.precision, False)
 		for i in range(result.size**2):
-			result.tiles[i] = self.tiles[i] + noisegrid.tiles[i]
-		result.amplitude = self.amplitude + noisegrid.amplitude
+			result.tiles[i] = (self.tiles[i] + noisegrid.tiles[i]) / 2.0
 		return result
 
 	def scale(self, scalar):

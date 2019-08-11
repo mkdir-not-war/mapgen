@@ -87,6 +87,8 @@ def printregion(root, con, region, adjregions):
 					fgcolor = colors.get('hot desert')
 				else:
 					bgcolor = colors.get('ground')
+					if (tile.forest):
+						bgcolor = colors.get('subarctic continental')
 					if (tile.elevationdir):
 						if (tile.elevationdir[1] > 0):
 							printchar = 'v'

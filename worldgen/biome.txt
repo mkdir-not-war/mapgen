@@ -1,6 +1,6 @@
 {
     "tropical rainforest" : {
-    	"forestdensity" : 0.98,
+    	"forestdensity" : 0.85,
     	"numrivers" : 5,
     	"numlakes" : 4,
     	"weather" : {
@@ -10,7 +10,7 @@
     	"changesperday" : 12
     },
 	"tropical savannah" : {
-		"forestdensity" : 0.4,
+		"forestdensity" : 0.2,
     	"numrivers" : 2,
     	"numlakes" : 1,
     	"weather" : {
@@ -40,7 +40,7 @@
     	"changesperday" : 12
 	},	
 	"humid continental" : {
-		"forestdensity" : 0.5,
+		"forestdensity" : 0.46,
     	"numrivers" : 3,
     	"numlakes" : 3,
     	"weather" : {
@@ -51,7 +51,7 @@
     	"changesperday" : 8
 	},	
 	"subarctic continental" : {
-		"forestdensity" : 0.8,
+		"forestdensity" : 0.65,
     	"numrivers" : 2,
     	"numlakes" : 3,
     	"weather" : {
@@ -62,7 +62,7 @@
     	"changesperday" : 6
 	},
 	"mediterranean" : {
-		"forestdensity" : 0.6,
+		"forestdensity" : 0.5,
     	"numrivers" : 3,
     	"numlakes" : 1,
     	"weather" : {
@@ -72,7 +72,7 @@
     	"changesperday" : 6
 	},	
 	"humid subtropical" : {
-		"forestdensity" : 0.7,
+		"forestdensity" : 0.6,
     	"numrivers" : 3,
     	"numlakes" : 2,
     	"weather" : {
@@ -82,7 +82,7 @@
     	"changesperday" : 8
 	},	
 	"oceanic" : {
-		"forestdensity" : 0.7,
+		"forestdensity" : 0.65,
     	"numrivers" : 4,
     	"numlakes" : 4,
     	"weather" : {
@@ -92,7 +92,7 @@
     	"changesperday" : 8
 	},	
 	"coastal temp rainforest" : {
-		"forestdensity" : 0.95,
+		"forestdensity" : 0.85,
     	"numrivers" : 5,
     	"numlakes" : 4,
     	"weather" : {
@@ -123,7 +123,7 @@
     	"changesperday" : 6
 	},	
 	"tundra" : {
-		"forestdensity" : 0.02,
+		"forestdensity" : 0.08,
     	"numrivers" : 1,
     	"numlakes" : 4,
     	"weather" : {

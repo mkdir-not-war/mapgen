@@ -25,6 +25,8 @@ MIN_MOUNTLAYERS = 3
 MOUNTLAYER_WIDTH = 3
 VOLCANO_LAYERS = 8
 RIVERSPAWNRADIUS = 12
+RIVERFORESTMOD = 1.5
+MOUNTSLOPEFORESTMOD = 2.0
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -288,8 +290,7 @@ class RegionMap():
 						pos[0]+downslopedir[0]*dist, 
 						pos[1]+downslopedir[1]*dist)
 					while (self.inbounds(*newpos)):
-						if (terrainnoise.get(*newpos) > 
-							terrainnoise.amplitude / 4.0):
+						if (terrainnoise.get(*newpos) > 0.25):
 							self.regiontile(*newpos).elevationdir = None
 						else:
 							self.regiontile(*newpos).elevationdir = \
@@ -317,8 +318,7 @@ class RegionMap():
 					numlayers = MIN_MOUNTLAYERS + int(
 						(MAX_MOUNTLAYERS-MIN_MOUNTLAYERS) * \
 						self.tnoisegrids[0].tiles[i * \
-							self.tnoisegrids[0].size // 2] // \
-						self.tnoisegrids[0].amplitude)
+							self.tnoisegrids[0].size // 2])
 					if (self.biome == 'volcano'):
 						numlayers = VOLCANO_LAYERS
 					radius = MOUNTLAYER_WIDTH+0.2
@@ -463,6 +463,21 @@ class RegionMap():
 					self.regiontile(*v).allwater = True
 
 			# last, do forests
+			for y in range(self.height):
+				for x in range(self.width):
+					p = 1.0 - terrainnoise.get(x, y)
+					adjregtiles = self.adjacenttiles(x, y, True)
+					adjregtiles.append((x, y))
+					for tile in adjregtiles:
+						if (not self.regiontile(*tile).riverdir is None):
+							p /= RIVERFORESTMOD
+					if (not self.regiontile(x, y).riverdir is None):
+						p /= RIVERFORESTMOD
+					if (self.biome == 'mountain' and
+						not self.regiontile(x, y).elevationdir is None):
+						p *= MOUNTSLOPEFORESTMOD
+					if (p < self.forestdensity):
+						self.regiontile(x, y).forest = True
 
 			##### END OF TERRAIN, BEGIN POIs AND METADATA ###########
 
