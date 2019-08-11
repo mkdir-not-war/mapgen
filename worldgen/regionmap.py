@@ -24,7 +24,7 @@ MAX_MOUNTLAYERS = 7
 MIN_MOUNTLAYERS = 3
 MOUNTLAYER_WIDTH = 3
 VOLCANO_LAYERS = 8
-RIVERSPAWNRADIUS = 6
+RIVERSPAWNRADIUS = 12
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -211,22 +211,17 @@ class RegionMap():
 		for winput in waterinputdirs:
 			avgx += avgx + winput[0]
 			avgy += avgy + winput[1]
-		nexus = (cx+int((avgx/2)*cx), cy+int((avgy/2)*cy))
 		riverinputs = []
 		angle = -0.5 # radians
-		while (len(riverinputs) < self.numrivers):
-			radius = RIVERSPAWNRADIUS
+		while (len(riverinputs) < self.numrivers and angle < 7.0):
 			x, y = (
-				int(nexus[0] + radius * cos(angle)),
-				int(nexus[1] + radius * sin(angle)))
-			while (not self.inbounds(x, y) and radius >= 0):
-				radius -= 1
-				x, y = (
-					int(nexus[0] + radius * cos(angle)),
-					int(nexus[1] + radius * sin(angle)))
-			if (self.inbounds(x, y)):
-				riverinputs.append((int(x), int(y)))
-			angle += 1.0 + self.tnoisegrids[1].tiles[0] # 0.0 <= x < 1.0
+				int(RIVERSPAWNRADIUS * cos(angle)),
+				int(RIVERSPAWNRADIUS * sin(angle)))
+			if ((dot((x, y), (avgx, avgy)) > 0  or 
+				(avgx, avgy) == (0, 0)) and
+				self.inbounds(x+cx, y+cy)):
+				riverinputs.append((x+cx, y+cy))
+			angle += self.tnoisegrids[1].tiles[0] # 0.0 <= x < 1.0
 		return riverinputs
 
 	def generateregion(self, adjtiles):
@@ -392,7 +387,7 @@ class RegionMap():
 										self.regiontile(x, y).elevationdir = None
 
 			# third, do rivers
-			if (not self.biome in ['ice cap', 'volcano']):
+			if (not self.biome in ['ice cap', 'volcano', 'polar', 'mountain']):
 				upslopedirections = [direction \
 					for direction in adjtiles \
 					if (adjtiles[direction].dist2coast > self.dist2coast) and
@@ -400,11 +395,13 @@ class RegionMap():
 				# 1) find center
 				cx, cy = (self.width//2, self.height//2) # (16, 16)
 				# 2) path from center to one output, and from inputs to center
-				riveroutput = (
-					min(cx+downslopedirections[0][0]*self.width//2, 
-						self.width-1),
-					min(cy+downslopedirections[0][1]*self.height//2, 
-						self.height-1))
+				riveroutput = None
+				if (len(downslopedirections) > 0):
+					riveroutput = (
+						min(cx+downslopedirections[0][0]*self.width//2, 
+							self.width-1),
+						min(cy+downslopedirections[0][1]*self.height//2, 
+							self.height-1))
 
 				riverinputs = []
 				riverinputs.extend(self.newriverinputs(upslopedirections))
@@ -415,27 +412,33 @@ class RegionMap():
 					riverinputs.append((x, y))
 
 				self.setneighbors(True)
-				riverpathtoout = astar(
-					(cx, cy), riveroutput, self, terrainnoise)
+				riverpathtoout = None
+				if (not riveroutput is None):
+					riverpathtoout = astar(
+						(cx, cy), riveroutput, self, terrainnoise)
 				riverpathsfromin = []
 				for riverin in riverinputs:
 					path = astar(riverin, (cx, cy), self, terrainnoise)
 					riverpathsfromin.append(path)
 				
 				# 3) draw paths, stop when hitting another river
-				prevtile = riverpathtoout[0]
-				for i in range(1, len(riverpathtoout)):
-					x, y = riverpathtoout[i]
-					riverdir = None
-					if (i-1 >= 0):
-						prevx, prevy = riverpathtoout[i-1]
-						riverdir = (x-prevx, y-prevy)
-					regtile = self.regiontile(x, y)
-					if (regtile.riverdir is None and
-						not regtile.allwater):
-						regtile.riverdir = riverdir
-					else:
-						break
+				if (not riverpathtoout is None):
+					prevtile = riverpathtoout[0]
+					for i in range(len(riverpathtoout)):
+						x, y = riverpathtoout[i]
+						riverdir = None
+						if (i-1 >= 0):
+							prevx, prevy = riverpathtoout[i-1]
+							riverdir = (x-prevx, y-prevy)
+						else:
+							x2, y2 = riverpathtoout[i+1]
+							riverdir = (x2-x, y2-y)
+						regtile = self.regiontile(x, y)
+						if (regtile.riverdir is None and
+							not regtile.allwater):
+							regtile.riverdir = riverdir
+						else:
+							break
 
 				for path in riverpathsfromin:
 					for i in range(len(path)):
@@ -450,9 +453,14 @@ class RegionMap():
 							regtile.riverdir = riverdir
 						else:
 							break
-							
-				# 4) if hit a river going opposite directions, form a lake
 
+				# 4) if hit a river going opposite directions, form a lake
+				valleys = terrainnoise.extremes(
+					mindist=5, minmax='min', buffer=6, num=self.numlakes)
+				if (riverpathtoout is None):
+					self.regiontile(cx, cy).allwater = True
+				for v in valleys:
+					self.regiontile(*v).allwater = True
 
 			# last, do forests
 
