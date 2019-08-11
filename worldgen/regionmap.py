@@ -27,6 +27,7 @@ VOLCANO_LAYERS = 8
 RIVERSPAWNRADIUS = 12
 RIVERFORESTMOD = 1.5
 MOUNTSLOPEFORESTMOD = 2.0
+TOWNRIVERMOD = 1.6
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -97,6 +98,8 @@ class RegionMap():
 		self.numlakes = 0
 		self.weather = []
 		self.refreshtimes = []
+		self.numhills = 0
+		self.maxtowns = 0
 		if (self.biome in biomedata):
 			self.forestdensity = biomedata[self.biome]['forestdensity']
 			self.numrivers = biomedata[self.biome]['numrivers']
@@ -107,7 +110,8 @@ class RegionMap():
 			changesperday = biomedata[self.biome]['changesperday']
 			self.refreshtimes = [i*24.0/changesperday \
 				for i in range(changesperday)]
-			self.numhills = 4#biomedata[self.biome]['numhills']
+			self.numhills = 4#biomedata[self.biome]['numhills'] ###############
+			self.maxtowns = biomedata[self.biome]['maxtowns']
 
 		self.generateregion(adjtiles)
 
@@ -469,7 +473,8 @@ class RegionMap():
 					adjregtiles = self.adjacenttiles(x, y, True)
 					adjregtiles.append((x, y))
 					for tile in adjregtiles:
-						if (not self.regiontile(*tile).riverdir is None):
+						if (not self.regiontile(*tile).riverdir is None or
+							self.regiontile(*tile).allwater):
 							p /= RIVERFORESTMOD
 					if (not self.regiontile(x, y).riverdir is None):
 						p /= RIVERFORESTMOD
@@ -482,7 +487,22 @@ class RegionMap():
 			##### END OF TERRAIN, BEGIN POIs AND METADATA ###########
 
 			# first, do towns (no towns on ice caps for now)
-			# (clear out forests)
+			p1 = self.tnoisegrids[0].tiles[0]
+			p2 = self.tnoisegrids[1].tiles[0]
+			numtowns = int(((p1 + p2) / 2.0 * float(self.maxtowns)) + 0.5)
+
+			towngrid = self.tnoisegrids[2]
+			towngrid = towngrid.sizedown(2)
+			for y in range(self.height):
+				for x in range(self.width):
+					if (self.regiontile(x, y).riverdir):
+						towngrid.tiles[x + towngrid.size * y] *= \
+							TOWNRIVERMOD #/ self.numtowns
+
+			townlocs = towngrid.extremes(
+				mindist=3, buffer=2, minmax='max', num=numtowns)
+			for x, y in townlocs:
+				self.regiontile(x, y).poi = 'town'
 
 			# second, do roads
 

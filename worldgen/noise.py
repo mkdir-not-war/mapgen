@@ -91,7 +91,13 @@ class NoiseGrid():
 					wx, wy, skellya, skellyb, skellyc, skellyd)
 		return result
 
-	def extremes(self, mindist=1, buffer=1, minmax='max', num=1):
+	def extremes(self, 
+		mindist=1, 
+		buffer=1, 
+		minmax='max', 
+		num=-1, 
+		filterfunc=None):
+
 		result = []
 		sortednoise = []
 
@@ -106,13 +112,14 @@ class NoiseGrid():
 		sortednoise = sorted(
 			sortednoise, key=lambda x: x[0], reverse=(minmax=='max'))
 
-		#threshold = 0.8
-		#sortednoise = filter(
-		#	lambda x: x[0]/self.amplitude>=threshold, 
-		#	sortednoise)
+		if (not filterfunc is None): 
+			sortednoise = list(filter(
+				lambda x: filterfunc(x), sortednoise))
 
 		index = 0
-		while (len(result) < num and index < len(sortednoise)):
+		while ((len(result) < num or num < 0) and 
+			index < len(sortednoise)):
+		
 			val, pos = sortednoise[index]
 
 			tooclose = False

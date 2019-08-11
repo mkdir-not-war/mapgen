@@ -7,7 +7,8 @@
     		"clear" : 0.4,
     		"rain" : 0.6
     	}, 
-    	"changesperday" : 12
+    	"changesperday" : 12,
+        "maxtowns" : 1
     },
 	"tropical savannah" : {
 		"forestdensity" : 0.2,
@@ -17,7 +18,8 @@
     		"clear" : 0.8,
     		"rain" : 0.2
     	}, 
-    	"changesperday" : 4
+    	"changesperday" : 4,
+        "maxtowns" : 1
 	},
 	"hot desert" : {
 		"forestdensity" : 0.0,
@@ -27,7 +29,8 @@
     		"clear" : 0.96,
     		"duststorm" : 0.04
     	}, 
-    	"changesperday" : 12
+    	"changesperday" : 12,
+        "maxtowns" : 1
 	},	
 	"hot steppe" : {
 		"forestdensity" : 0.1,
@@ -37,10 +40,11 @@
     		"clear" : 0.9,
     		"rain" : 0.1
     	}, 
-    	"changesperday" : 12
+    	"changesperday" : 12,
+        "maxtowns" : 2
 	},	
 	"humid continental" : {
-		"forestdensity" : 0.46,
+		"forestdensity" : 0.42,
     	"numrivers" : 3,
     	"numlakes" : 3,
     	"weather" : {
@@ -48,7 +52,8 @@
     		"rain" : 0.2,
     		"snow" : 0.05
     	}, 
-    	"changesperday" : 8
+    	"changesperday" : 8,
+        "maxtowns" : 8
 	},	
 	"subarctic continental" : {
 		"forestdensity" : 0.65,
@@ -59,7 +64,8 @@
     		"rain" : 0.05,
     		"snow" : 0.1
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 6,
+        "maxtowns" : 3
 	},
 	"mediterranean" : {
 		"forestdensity" : 0.5,
@@ -69,7 +75,8 @@
     		"clear" : 0.7,
     		"rain" : 0.3
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 6,
+        "maxtowns" : 6
 	},	
 	"humid subtropical" : {
 		"forestdensity" : 0.6,
@@ -79,7 +86,8 @@
     		"clear" : 0.4,
     		"rain" : 0.6
     	}, 
-    	"changesperday" : 8
+    	"changesperday" : 8,
+        "maxtowns" : 4
 	},	
 	"oceanic" : {
 		"forestdensity" : 0.65,
@@ -89,7 +97,8 @@
     		"clear" : 0.5,
     		"rain" : 0.5
     	}, 
-    	"changesperday" : 8
+    	"changesperday" : 8,
+        "maxtowns" : 4
 	},	
 	"coastal temp rainforest" : {
 		"forestdensity" : 0.85,
@@ -99,7 +108,8 @@
     		"clear" : 0.1,
     		"rain" : 0.9
     	}, 
-    	"changesperday" : 12
+    	"changesperday" : 12,
+        "maxtowns" : 2
 	},
 	"cold desert" : {
 		"forestdensity" : 0.0,
@@ -109,7 +119,8 @@
     		"clear" : 0.95,
     		"duststorm" : 0.05
     	}, 
-    	"changesperday" : 8
+    	"changesperday" : 8,
+        "maxtowns" : 1
 	},	
 	"cold steppe" : {
 		"forestdensity" : 0.1,
@@ -120,7 +131,8 @@
     		"rain" : 0.02,
     		"snow" : 0.1
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 6,
+        "maxtowns" : 2
 	},	
 	"tundra" : {
 		"forestdensity" : 0.08,
@@ -130,7 +142,8 @@
     		"clear" : 0.8,
     		"snow" : 0.2
     	}, 
-    	"changesperday" : 12
+    	"changesperday" : 12,
+        "maxtowns" : 1
 	},	
 	"ice cap" : {
 		"forestdensity" : 0.0,
@@ -141,7 +154,8 @@
     		"snow" : 0.6,
     		"blizzard" : 0.2
     	}, 
-    	"changesperday" : 6
+    	"changesperday" : 6,
+        "maxtowns" : 1
 	},
 	"volcano" : {
 		"forestdensity" : 0.0,
@@ -151,7 +165,8 @@
     		"clear" : 0.8,
     		"ash" : 0.2
     	}, 
-    	"changesperday" : 12
+    	"changesperday" : 12,
+        "maxtowns" : 1
 	},
 	"polar" : {
 		"forestdensity" : 0.0,
@@ -161,7 +176,8 @@
     		"clear" : 0.9,
     		"snow" : 0.1
     	}, 
-    	"changesperday" : 4
+    	"changesperday" : 4,
+        "maxtowns" : 0
 	},
 	"mountain" : {
 		"forestdensity" : 0.4,
@@ -170,6 +186,7 @@
     	"weather" : {
     		"clear" : 1.0
     	}, 
-    	"changesperday" : 1
+    	"changesperday" : 1,
+        "maxtowns" : 2
 	}
 }

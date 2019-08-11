@@ -109,6 +109,11 @@ def printregion(root, con, region, adjregions):
 						elif (tile.riverdir[0] < 0):
 							printchar = '<'
 						fgcolor = colors.get('water')
+					if (tile.poi == 'town'):
+						printchar = 't'
+						fgcolor = colors.get('white')
+					if (tile.roaddir):
+						bgcolor = colormult(bgcolor, libtcod.light_grey)
 				if fgcolor is None:
 					fgcolor = bgcolor
 				drawpos = (
