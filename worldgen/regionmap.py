@@ -3,6 +3,7 @@ from dataloader import getdata
 from random import choices
 from numpy import dot
 from math import sin, cos
+from town import Town
 
 biomedata = getdata('biome')
 
@@ -83,9 +84,9 @@ class RegionMap():
 				self.tiles.append(RegionTile(x, y))
 
 		# meta info
-		dungeonentrances = {} # (x, y) -> dungeonId
-		dungeons = {} # dungeonId -> Dungeon()
-		towns = {} # (x, y) -> Town()
+		self.dungeonentrances = {} # (x, y) -> dungeonId
+		self.dungeons = {} # dungeonId -> Dungeon()
+		self.towns = {} # (x, y) -> Town()
 
 		# terrain info
 		self.coastdir = worldtile.dir2coast
@@ -536,6 +537,7 @@ class RegionMap():
 			for x, y in townlocs:
 				if (not self.regiontile(x, y).allwater):
 					self.regiontile(x, y).poi = 'town'
+					self.towns[(x, y)] = Town()
 
 			# second, do roads
 
