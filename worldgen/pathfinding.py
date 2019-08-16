@@ -48,6 +48,43 @@ def reconstruct_path(cameFrom, current):
 		totalpath.insert(0, current)
 	return totalpath[:]
 
+def basicastar(start, goal, mapobj, costmap):
+	closedset = []
+	openset = [start]
+	camefrom = {}
+	gScore = {}
+	gScore[start] = 0
+	fScore = {}
+	fScore[start] = h(start, goal)
+
+	while openset:
+		currenti = 0
+		for p in range(len(openset)):
+			if (openset[p] in fScore):
+				if (fScore[openset[p]] < currenti):
+					currenti = p
+		if tupleequal(openset[currenti], goal):
+			return reconstruct_path(camefrom, openset[currenti])
+		current = openset[currenti]
+		openset = openset[:currenti] + openset[currenti+1:]
+		closedset.append(current)
+
+		for n in mapobj.neighbors(current):
+			if n in closedset:
+				continue
+			if n not in gScore:
+				gScore[n] = mapobj.size * 10
+			cost_at_n = costmap[n[0] + mapobj.size * n[1]]
+			t_gScore = gScore[current] + cost_at_n
+			if n not in openset:
+				openset.append(n)
+			elif t_gScore >= gScore[n]:
+				continue
+			camefrom[n] = current
+			gScore[n] = t_gScore
+			fScore[n] = t_gScore + h(n, goal)
+	return False
+
 '''
 mapobj.neighbors(pos) returns 
 list of tuples that neighbor position pos

@@ -85,7 +85,7 @@ class RegionMap():
 
 		# meta info
 		self.dungeonentrances = {} # (x, y) -> dungeonId
-		self.dungeons = {} # dungeonId -> Dungeon()
+		self.dungeons = {} # dungeonId -> Dungeon(), level -> [dungeonId, ...]
 		self.towns = {} # (x, y) -> Town()
 
 		# terrain info
