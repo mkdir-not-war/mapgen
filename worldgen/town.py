@@ -13,9 +13,10 @@ buildingtypes = {
 	'tavern' : BuildingType('tavern', 5, 4),
 	'shop' : BuildingType('shop', 4, 4),
 	'temple' : BuildingType('temple', 5, 6),
-	'hall' : BuildingType('hall', 6, 4),
-	'guardhouse' : BuildingType('guardhouse', 4, 4),
-	'wall' : BuildingType('wall', 1, 2)
+	'mansion' : BuildingType('mansion', 6, 4),
+	'guardhouse' : BuildingType('guardhouse', 3, 4),
+	'wall' : BuildingType('wall', 3, 3),
+	'wall-front' : BuildingType('wall-front', 3, 4)
 }
 
 '''
@@ -102,6 +103,12 @@ MIN_NEXUS = 1
 NEXUS_X_OFFSET = 3
 NEXUS_Y_BUFFER = 2
 
+WALLWIDTHMIN = 4
+WALLHEIGHTMIN = 4
+
+MINITILEWIDTH = 7
+BUILDING_MINITILE_OFFSET_X = 1
+
 class TownNexus():
 	def __init__(self, x, y):
 		self.x = x
@@ -124,7 +131,7 @@ class Town():
 		self.water = water # list of directions
 
 		self.genminimap()
-		#self.genbuildings()
+		self.genbuildings()
 		#self.genroads()
 
 	def inbounds(self, x, y, buffer=0):
@@ -161,7 +168,7 @@ class Town():
 			return (0, 0, d, d)
 
 	def genminimap(self):
-		minimapwidth = self.size // 7
+		minimapwidth = self.size // MINITILEWIDTH
 		center = (minimapwidth-1) // 2
 
 		walled = False
@@ -176,26 +183,38 @@ class Town():
 		nexy = randint(center-NEXUS_Y_BUFFER, center+NEXUS_Y_BUFFER)
 		nexuses.append((nexx, nexy))
 
+		topnex = nexy
+		leftnex = nexx
+		rightnex = nexx
+
 		if (numnex > 1):
 			nexx = center - NEXUS_X_OFFSET
 			nexy = randint(NEXUS_Y_BUFFER, minimapwidth-NEXUS_Y_BUFFER)
 			nexuses.append((nexx, nexy))
+			leftnex = nexx
+			if (nexy < topnex):
+				topnex = nexy
 		if (numnex > 2):
 			nexx = center + NEXUS_X_OFFSET
 			nexy = randint(NEXUS_Y_BUFFER, minimapwidth-NEXUS_Y_BUFFER)
 			nexuses.append((nexx, nexy))
+			rightnex = nexx
+			if (nexy < topnex):
+				topnex = nexy
 
-		# enclose in walls if walled
+		topnex = max(topnex - 3, 0)
+		leftnex = max(leftnex - 2, 0)
+		rightnex = min(rightnex + 2, minimapwidth-1)
+
+		# set left, right and top walls
 		if walled:
 			for x in range(minimapwidth):
 				for y in range(minimapwidth):
-					if (
-						x == 0 or 
-						x == minimapwidth-1 or
-						y == 0 or
-						y == minimapwidth-1):
-
+					if ((x == leftnex and y >= topnex) or 
+						(x == rightnex and y >= topnex)):
 						self.minimap[(x, y)] = 'wall'
+					elif (y == topnex and x >= leftnex and x <= rightnex):
+						self.minimap[(x, y)] = 'wall-front'
 
 		# place buildings around nexus
 		for nexx, nexy in nexuses:
@@ -205,6 +224,12 @@ class Town():
 				offset = layoutoffsets[i]
 				buildingchoices = nexuslayouts[nexustype][i]
 				posx, posy = nexx + offset[0], nexy + offset[1]
+				# no buildings on the bottom or top rows in a walled city
+				if walled and (posy == 0 or posy >= minimapwidth - 1):
+					continue
+				elif (posy < 0 or posy >= minimapwidth):
+					# out of bounds
+					continue
 				if ((posx, posy) in self.minimap and 
 					self.minimap[(posx, posy)] == 'wall'):
 					if posy < minimapwidth-1 and random() < 0.4:
@@ -216,58 +241,25 @@ class Town():
 					else:
 						self.minimap[(posx, posy)] = building
 
-		# scoot walls in closer to buildings
+		# set bottom wall
 		if walled:
-			leftbound = 0
-			for x in range(1, center):
-				hasbuilding = False
-				for y in range(minimapwidth):
-					if (x, y) in self.minimap and self.minimap[(x, y)] != 'wall':
-						hasbuilding = True
-				if not hasbuilding:
-					leftbound = x
-			if leftbound > 0:
-				leftbound = leftbound-1
-				for x in range(leftbound):
-					self.minimap.pop((x, 0), None)
-					self.minimap.pop((x, minimapwidth-1), None)
-				for y in range(minimapwidth):
-					self.minimap.pop((0, y), None)
-					self.minimap[leftbound, y] = 'wall'
-
-			rightbound = minimapwidth-1
-			for x in list(range(center, minimapwidth))[::-1]:
-				hasbuilding = False
-				for y in range(minimapwidth):
-					if (x, y) in self.minimap and self.minimap[(x, y)] != 'wall':
-						hasbuilding = True
-				if not hasbuilding:
-					rightbound = x
-			if rightbound < minimapwidth-1:
-				rightbound = rightbound+1
-				for x in range(rightbound, minimapwidth):
-					self.minimap.pop((x, 0), None)
-					self.minimap.pop((x, minimapwidth-1), None)
-				for y in range(minimapwidth):
-					self.minimap.pop((minimapwidth-1, y), None)
-					self.minimap[rightbound, y] = 'wall'
-
-			topbound = 0
-			for y in range(0, center):
+			botbound = minimapwidth-1
+			for y in list(range(center, minimapwidth))[::-1]:
 				hasbuilding = False
 				for x in range(minimapwidth):
 					if (x, y) in self.minimap and self.minimap[(x, y)] != 'wall':
 						hasbuilding = True
-				if not hasbuilding:
-					topbound = y
-			if topbound > 0:
-				topbound = topbound-1
-				for y in range(topbound):
-					self.minimap.pop((leftbound, y), None)
-					self.minimap.pop((rightbound, y), None)
-				for x in range(leftbound, rightbound):
-					self.minimap.pop((x, 0), None)
-					self.minimap[x, topbound] = 'wall'
+				if hasbuilding:
+					break
+				else:
+					botbound = y
+			botbound = min(botbound + 1, minimapwidth - 1)
+			for y in range(botbound, minimapwidth):
+				self.minimap.pop((leftnex, y), None)
+				self.minimap.pop((rightnex, y), None)
+			for x in range(leftnex, rightnex+1):
+				self.minimap.pop((x, minimapwidth-1), None)
+				self.minimap[x, botbound] = 'wall-front'
 
 		# delete walls in directions of water
 		for waterdir in self.water:
@@ -276,17 +268,50 @@ class Town():
 				for x in range(cb[0], cb[0]+cb[2]):
 					self.minimap.pop((x, y), None)
 
-
 	def genbuildings(self):
-		minimapwidth = self.size // 7
+		minimapwidth = self.size // MINITILEWIDTH
 		for bx, by in self.minimap:
 			bname = self.minimap[(bx, by)]
 
-			x = bx * minimapwidth
-			if bname == 'wall' and bx == minimapwidth-1:
-				x = minimapwidth**2 - 1
+			x = bx * MINITILEWIDTH
+			y = by * MINITILEWIDTH
 
-			if bname != 'wall':
+			if bname == 'wall':
+				pos1 = (x + 2, y)
+				pos2 = (x + 2, y + 2)
+				pos3 = (x + 2, y + 4)
+				pos4 = (x, y + 2)
+				pos5 = (x + 4, y + 2)
+				self.buildings[(pos1)] = MapObject(bname, pos1[0], pos1[1])
+				self.buildings[(pos2)] = MapObject(bname, pos2[0], pos2[1])
+				self.buildings[(pos3)] = MapObject(bname, pos3[0], pos3[1])
+				self.buildings[(pos4)] = MapObject('wall-front', pos4[0], pos4[1])
+				self.buildings[(pos5)] = MapObject('wall-front', pos5[0], pos5[1])
+			elif bname == 'wall-front':
+				pos1 = (x + 2, y)
+				pos2 = (x + 2, y + 2)
+				pos3 = (x + 2, y + 3)
+				pos4 = (x, y + 2)
+				pos5 = (x + 4, y + 2)
+				self.buildings[(pos1)] = MapObject(bname, pos1[0], pos1[1])
+				self.buildings[(pos2)] = MapObject(bname, pos2[0], pos2[1])
+				self.buildings[(pos3)] = MapObject('wall-front', pos3[0], pos3[1])
+				self.buildings[(pos4)] = MapObject('wall-front', pos4[0], pos4[1])
+				self.buildings[(pos5)] = MapObject('wall-front', pos5[0], pos5[1])
+			elif bname == 'guardhouse':
+				# guardhouses only happen on side walls, not front or back
+				pos1 = (x + 2, y)
+				pos2 = (x + 2, y + 2)
+				pos3 = (x + 2, y + 4)
+				pos4 = (x, y + 2)
+				pos5 = (x + 4, y + 2)
+				self.buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
+				self.buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
+				self.buildings[(pos3)] = MapObject('wall', pos3[0], pos3[1])
+				self.buildings[(pos4)] = MapObject(bname, pos4[0], pos4[1])
+				self.buildings[(pos5)] = MapObject(bname, pos5[0], pos5[1])
+			else:
+				x = x + BUILDING_MINITILE_OFFSET_X
 				self.buildings[(x, y)] = MapObject(bname, x, y)
 
 
@@ -428,10 +453,14 @@ def printtown(town):
 					i == 0 or 
 					i == building.width()-1 or
 					j == 0 or
-					(j == building.height()-1 and 
-						i != building.width() // 2 and 
-						building.buildingtype.name != 'well')):
-					printmap[(x+i) + town.size * (y+j)] = '#'
+					(j == building.height()-1 and not
+						(i == building.width() // 2 and 
+						not building.buildingtype.name in ['well', 'wall', 'wall-front']))):
+					try:
+						printmap[(x+i) + town.size * (y+j)] = '#'
+					except:
+						print(x+i, y+j, building.buildingtype.name)
+						input()
 				else:
 					printmap[(x+i) + town.size * (y+j)] = ' '
 	for y in range(town.size):
@@ -450,7 +479,7 @@ def main():
 		rand = random()
 		town = Town(64, rand)
 		printminimap(town)
-		#printtown(town)
+		printtown(town)
 		print()
 
 if __name__=='__main__':
