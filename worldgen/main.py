@@ -99,20 +99,20 @@ def printregion(root, con, region, adjregions):
 						elif (tile.elevationdir[0] < 0):
 							printchar = '<'
 						fgcolor = colors.get('mountain')
-					if (tile.riverdir):
-						if (tile.riverdir[1] > 0):
+					if (tile.riverout):
+						if (tile.riverout[1] > 0):
 							printchar = 'v'
-						elif (tile.riverdir[1] < 0):
+						elif (tile.riverout[1] < 0):
 							printchar = '^'
-						if (tile.riverdir[0] > 0):
+						if (tile.riverout[0] > 0):
 							printchar = '>'
-						elif (tile.riverdir[0] < 0):
+						elif (tile.riverout[0] < 0):
 							printchar = '<'
 						fgcolor = colors.get('water')
 					if (tile.poi == 'town'):
 						printchar = 't'
 						fgcolor = colors.get('white')
-					if (tile.roaddir):
+					if (tile.roadout):
 						bgcolor = colormult(bgcolor, libtcod.light_grey)
 				if fgcolor is None:
 					fgcolor = bgcolor

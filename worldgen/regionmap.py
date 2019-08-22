@@ -43,8 +43,12 @@ class RegionTile():
 
 		# cardinal and diagonals
 		self.elevationdir = None
-		self.roaddir = None	
-		self.riverdir = None 
+
+		self.roadin = []	
+		self.roadout = None
+
+		self.riverin = [] 
+		self.riverout = None
 
 class RegionMap():
 	def __init__(self, x, y, world, noisegrids, regionside):
@@ -426,6 +430,7 @@ class RegionMap():
 					riverpathsfromin.append(path)
 				
 				# 3) draw paths, stop when hitting another river
+				# first draw from center to output, if any
 				if (not riverpathtoout is None):
 					prevtile = riverpathtoout[0]
 					for i in range(len(riverpathtoout)):
@@ -435,26 +440,33 @@ class RegionMap():
 							prevx, prevy = riverpathtoout[i-1]
 							riverdir = (x-prevx, y-prevy)
 						else:
-							x2, y2 = riverpathtoout[i+1]
-							riverdir = (x2-x, y2-y)
+							riverdir = downslopedirections[0]
 						regtile = self.regiontile(x, y)
-						if (regtile.riverdir is None and
-							not regtile.allwater):
-							regtile.riverdir = riverdir
+						if (not regtile.allwater):
+							if (regtile.riverout is None):
+								regtile.riverout = riverdir
+							if (i-1 >= 0):
+								self.regiontile(*prevtile).riverin = riverdir
 						else:
 							break
 
 				for path in riverpathsfromin:
+					previousriverdir = None
 					for i in range(len(path)):
 						x, y = path[i]
 						riverdir = None
+						# if not at the last node
 						if (i+1 < len(path)):
+							# get the next node
 							x2, y2 = path[i+1]
+							previousriverdir = riverdir
 							riverdir = (x2-x, y2-y)
 						regtile = self.regiontile(x, y)
-						if (regtile.riverdir is None and
-							not regtile.allwater):
-							regtile.riverdir = riverdir
+						# if it doesn't already have a river, or is a lake/ocean
+						if (not regtile.allwater):
+							if (regtile.riverout is None):
+								regtile.riverout = riverdir
+								regtile.riverin = previousriverdir
 						else:
 							break
 
@@ -474,10 +486,10 @@ class RegionMap():
 					adjregtiles = self.adjacenttiles(x, y, True)
 					adjregtiles.append((x, y))
 					for tile in adjregtiles:
-						if (not self.regiontile(*tile).riverdir is None or
+						if (not self.regiontile(*tile).riverout is None or
 							self.regiontile(*tile).allwater):
 							p /= RIVERFORESTMOD
-					if (not self.regiontile(x, y).riverdir is None):
+					if (not self.regiontile(x, y).riverout is None):
 						p /= RIVERFORESTMOD
 					if (self.biome == 'mountain' and
 						not self.regiontile(x, y).elevationdir is None):
@@ -521,7 +533,7 @@ class RegionMap():
 			towngrid = towngrid.sizedown(2)
 			for y in range(self.height):
 				for x in range(self.width):
-					if (self.regiontile(x, y).riverdir):
+					if (self.regiontile(x, y).riverout):
 						towngrid.tiles[x + towngrid.size * y] *= \
 							TOWNRIVERMOD
 					if (self.regiontile(x, y).allwater):
@@ -537,7 +549,7 @@ class RegionMap():
 			for x, y in townlocs:
 				if (not self.regiontile(x, y).allwater):
 					self.regiontile(x, y).poi = 'town'
-					self.towns[(x, y)] = Town()
+					self.towns[(x, y)] = 1#Town()
 
 			# second, do roads
 

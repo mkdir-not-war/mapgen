@@ -132,7 +132,7 @@ class Town():
 
 		self.genminimap()
 		self.genbuildings()
-		#self.genroads()
+		self.genroads()
 
 	def inbounds(self, x, y, buffer=0):
 		result = (x-buffer >= 0 and
@@ -314,11 +314,6 @@ class Town():
 				x = x + BUILDING_MINITILE_OFFSET_X
 				self.buildings[(x, y)] = MapObject(bname, x, y)
 
-
-	def getroadoutlets(self):
-		result = []
-		return result
-
 	def neighbors(self, pos):
 		return self.adjacenttiles(pos[0], pos[1], True)
 
@@ -365,20 +360,25 @@ class Town():
 	def genroads(self):
 		# get cost map (1 = ground, size**2 = wall/building)
 		costmap = [1] * self.size**2
+		buildingstarts = []
 		for x, y in self.buildings:
 			building = self.buildings[(x, y)]
 			for j in range(building.height()):
 				for i in range(building.width()):
-					try:
-						costmap[(i+x) + self.size * (y+j)] = self.size**2
-					except:
-						print(x, y)
-						print((i+x, y+j), self.size)
-						input()
+					costmap[(i+x) + self.size * (y+j)] = self.size**2
+			if not building.buildingtype.name in ['wall', 'wall-front', 'xguardhouse']:
+				buildingstarts.append(
+					(x+building.width()-1, y+building.height()))
+
+		paths = []
+
+		center = (self.size//2, self.size//2)
+		for start in buildingstarts:
+			paths.append(basicastar(start, center, self, costmap))
 
 		# from each nexus, get astar to connected nexuses
 		'''
-		paths = []
+		
 		for nexpos in self.nexuses:
 			nex = self.nexuses[nexpos]
 			for relnext in nex.next:
