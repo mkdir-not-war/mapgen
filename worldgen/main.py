@@ -112,8 +112,9 @@ def printregion(root, con, region, adjregions):
 					if (tile.poi == 'town'):
 						printchar = 't'
 						fgcolor = colors.get('white')
-					if (tile.roadout):
-						bgcolor = colormult(bgcolor, libtcod.light_grey)
+					elif (len(tile.roaddirs) > 0):
+						printchar = '.'
+						fgcolor = colors.get('white')
 				if fgcolor is None:
 					fgcolor = bgcolor
 				drawpos = (

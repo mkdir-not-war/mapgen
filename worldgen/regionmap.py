@@ -1,4 +1,4 @@
-from pathfinding import astar, vectorsbyclosestangle, lerp
+from pathfinding import astar, vectorsbyclosestangle, lerp, manhattandist, basicastar
 from dataloader import getdata
 from random import choices
 from numpy import dot
@@ -30,6 +30,8 @@ RIVERFORESTMOD = 1.5
 MOUNTSLOPEFORESTMOD = 2.0
 TOWNRIVERMOD = 1.6
 FORESTBORDERBLEED = 3
+TOWN2TOWNROADMIN = 5
+FORESTROADPROB = 0.5
 
 class RegionTile():
 	def __init__(self, x, y):
@@ -44,8 +46,7 @@ class RegionTile():
 		# cardinal and diagonals
 		self.elevationdir = None
 
-		self.roadin = []	
-		self.roadout = None
+		self.roaddirs = []
 
 		self.riverin = [] 
 		self.riverout = None
@@ -53,7 +54,7 @@ class RegionTile():
 class RegionMap():
 	def __init__(self, x, y, world, noisegrids, regionside):
 		self.width = self.height = regionside
-		self.size = regionside**2
+		self.size = regionside # used for pathfinding
 
 		self.worldpos = (x, y)
 
@@ -234,6 +235,52 @@ class RegionMap():
 			angle += self.tnoisegrids[1].tiles[0] # 0.0 <= x < 1.0
 		return riverinputs
 
+	def avgtuples(self, tuples):
+		rx = 0
+		ry = 0
+		for x, y in tuples:
+			rx += x
+			ry += y
+		rx = rx // len(tuples)
+		ry = ry // len(tuples)
+		return (rx, ry)
+
+	def nextmindistnode(self, curr, nodes):
+		result = nodes[0]
+		mindist = 0
+		for node in nodes:
+			dist = manhattandist(curr, node)
+			if -1 * dist > mindist:
+				mindist = -1 * dist
+				result = node
+		return result, -1*mindist
+
+	def roadpaths(self, center, townlocs):
+		numtowns = len(townlocs)
+		if (numtowns <= 1):
+			return []
+
+		result = []
+
+		currentnode = center
+		unseen = townlocs[:]
+		visited = []
+
+		while (len(visited) < numtowns):
+			closestnode, distfromcurr = self.nextmindistnode(currentnode, unseen)
+			distfromcenter = manhattandist(center, closestnode)
+			if (distfromcurr <= distfromcenter or 
+				distfromcurr <= TOWN2TOWNROADMIN):
+				result.append((currentnode, closestnode))
+			if (distfromcurr > distfromcenter or 
+				distfromcenter <= TOWN2TOWNROADMIN):
+				result.append((center, closestnode))
+			unseen.remove(closestnode)
+			visited.append(closestnode)
+			currentnode = closestnode
+
+		return result
+
 	def generateregion(self, adjtiles):
 		if (self.biome in ['water', 'ice cap']):
 			# maybe small islands?
@@ -369,10 +416,15 @@ class RegionMap():
 						mindist=5, buffer=6, num=numhills)
 
 					hilllayers = []
-					for i in range(numhills):
-						x, y = peaks[i]
+					hill = 0
+					peak = 0
+					while (hill < numhills and peak < len(peaks)):
+						x, y = peaks[peak]
 						radius = 1
-						hilllayers.append([x, y, radius])
+						if (not self.regiontile(x, y).allwater):
+							hilllayers.append([x, y, radius])
+							hill += 1
+						peak += 1
 
 					for y in range(self.height):
 						for x in range(self.width):
@@ -446,7 +498,7 @@ class RegionMap():
 							if (regtile.riverout is None):
 								regtile.riverout = riverdir
 							if (i-1 >= 0):
-								self.regiontile(*prevtile).riverin = riverdir
+								self.regiontile(*prevtile).riverin.append(riverdir)
 						else:
 							break
 
@@ -466,7 +518,7 @@ class RegionMap():
 						if (not regtile.allwater):
 							if (regtile.riverout is None):
 								regtile.riverout = riverdir
-								regtile.riverin = previousriverdir
+								regtile.riverin.append(previousriverdir)
 						else:
 							break
 
@@ -525,6 +577,7 @@ class RegionMap():
 			##### END OF TERRAIN, BEGIN POIs AND METADATA ###########
 
 			# first, do towns (no towns on ice caps for now)
+			# also, remove forests immediately around towns
 			p1 = self.tnoisegrids[0].tiles[0]
 			p2 = self.tnoisegrids[1].tiles[0]
 			numtowns = int(((p1 + p2) / 2.0 * float(self.maxtowns)) + 0.5)
@@ -550,8 +603,88 @@ class RegionMap():
 				if (not self.regiontile(x, y).allwater):
 					self.regiontile(x, y).poi = 'town'
 					self.towns[(x, y)] = 1#Town()
+				# cut down nearby trees
+				adjtiles = self.adjacenttiles(x, y, True)
+				self.regiontile(x, y).forest = False
+				for tile in adjtiles:
+					self.regiontile(*tile).forest = False
 
 			# second, do roads
+			if (len(townlocs) > 1):
+
+				# find average point of all town positions
+				avgpos = self.avgtuples(townlocs)
+				firsttown, dist = self.nextmindistnode(avgpos, townlocs)
+
+				# calculate endpoints
+				points = self.roadpaths(firsttown, townlocs)
+
+				# calculate paths
+				roadlist = [] # may want to turn this into a 2-dim dict, faster
+				costmap = [4] * self.size**2
+				for y in range(self.height):
+					for x in range(self.width):
+						# avoid allwater completely
+						if (self.regiontile(x, y).allwater or 
+							self.regiontile(x, y).islava):
+							costmap[x + self.width * y] = self.size**2
+						# avoid rivers if possible
+						elif (self.regiontile(x, y).riverout):
+							costmap[x + self.width * y] = 40
+						# avoid changes in elevation somewhat
+						elif (self.regiontile(x, y).elevationdir):
+							costmap[x + self.width * y] = 40
+						# prefer non-forest to forest
+						elif (self.regiontile(x, y).forest):
+							costmap[x + self.width * y] = 20
+
+				# draw paths
+				# diagonal paths?
+				DIAGONAL_ROADS = False
+				self.setneighbors(DIAGONAL_ROADS)
+				for start, stop in points:
+					path = basicastar(start, stop, self, costmap)
+					for x, y in path:
+						if not (x, y) in roadlist:
+							roadlist.append((x, y))
+							costmap[x + self.width * y] = \
+								costmap[x + self.width * y] // 4
+
+				for x, y in roadlist:
+					regtile = self.regiontile(x, y)
+					if (regtile.forest and 
+						self.tnoisegrids[0].get(x, y) >= FORESTROADPROB):
+						continue
+
+					if x+1 < self.width and (x+1, y) in roadlist:
+						regtile.roaddirs.append((1, 0))
+					if x-1 >= 0 and (x-1, y) in roadlist:
+						regtile.roaddirs.append((-1, 0))
+
+					if y+1 < self.height and (0, 1) in roadlist:
+						regtile.roaddirs.append((0, 1))
+					if y-1 >= 0 and (x, y-1) in roadlist:
+						regtile.roaddirs.append((0, -1))
+
+
+					if (DIAGONAL_ROADS):
+						if (x+1 < self.width and 
+							y+1 < self.height and 
+							(x+1, y+1) in roadlist):
+							regtile.roaddirs.append((1, 1))
+						if (x+1 < self.width and 
+							y-1 >= 0 and
+							(x+1, y-1) in roadlist):
+							regtile.roaddirs.append((1, -1))
+						if (x-1 >= 0 and 
+							y+1 < self.height and 
+							(x-1, y+1) in roadlist):
+							regtile.roaddirs.append((-1, 1))
+						if (x-1 >= 0 and 
+							y-1 >= 0 and
+							(x-1, y-1) in roadlist):
+							regtile.roaddirs.append((-1, -1))
+
 
 			# third, do POIs
 
