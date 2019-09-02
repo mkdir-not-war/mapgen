@@ -1,23 +1,6 @@
 from random import random, seed, randint, choice
 from pathfinding import basicastar, manhattandist
-
-class BuildingType():
-	def __init__(self, name, w, h):
-		self.name = name
-		self.width = w
-		self.height = h
-
-buildingtypes = {
-	'well' : BuildingType('well', 2, 2),
-	'house' : BuildingType('house', 4, 4),
-	'tavern' : BuildingType('tavern', 5, 4),
-	'shop' : BuildingType('shop', 4, 4),
-	'temple' : BuildingType('temple', 5, 6),
-	'mansion' : BuildingType('mansion', 6, 4),
-	'guardhouse' : BuildingType('guardhouse', 3, 4),
-	'wall' : BuildingType('wall', 3, 3),
-	'wall-front' : BuildingType('wall-front', 3, 4)
-}
+from mapobject import MapObject, mapobjtypes
 
 '''
 0 - center
@@ -60,43 +43,6 @@ nexuslayouts = {
 	}
 }
 
-class MapObject():
-	def __init__(self, name, x, y):
-		self.position = (x, y)
-		self.buildingtype = buildingtypes[name]
-
-	def width(self):
-		return self.buildingtype.width
-
-	def height(self):
-		return self.buildingtype.height
-
-	def rect(self):
-		result = (
-			self.position[0], self.position[1],
-			self.buildingtype.width, self.buildingtype.height)
-		return result
-
-	def collide(self, x, y):
-		return collide(x, y, self.rect())
-
-def collide(x, y, rect):
-	result = (
-		x >= rect[0] and
-		x < rect[0] + rect[2] and
-		y >= rect[1] and
-		y < rect[1] + rect[3])
-	return result
-
-def collide_rect(rec1, rect2, buffer=1):
-	combined_rect = (
-		rect1[0]-(rect2[2]+buffer),
-		rect1[1]-(rect2[3]+buffer),
-		rect1[2]+(rect2[2]+buffer*2),
-		rect1[3]+(rect2[3]+buffer*2))
-	result = self.collide(rect2[0], rect2[1], combrect)
-	return result
-
 MAX_NEXUS = 3
 MIN_NEXUS = 1
 
@@ -125,13 +71,11 @@ class Town():
 	def __init__(self, size, p, water=[]):
 		self.size = size # width (square)
 		self.road_bitmap = [0] * size**2
-		self.buildings = {} # (x, y) -> MapObject
 		self.minimap = {} # (x, y) -> building name
 		self.p = p
 		self.water = water # list of directions
 
 		self.genminimap()
-		self.genbuildings()
 		self.genroads()
 
 	def inbounds(self, x, y, buffer=0):
@@ -268,7 +212,9 @@ class Town():
 				for x in range(cb[0], cb[0]+cb[2]):
 					self.minimap.pop((x, y), None)
 
-	def genbuildings(self):
+	def getbuildings(self):
+		buildings = {}
+
 		minimapwidth = self.size // MINITILEWIDTH
 		for bx, by in self.minimap:
 			bname = self.minimap[(bx, by)]
@@ -282,22 +228,22 @@ class Town():
 				pos3 = (x + 2, y + 4)
 				pos4 = (x, y + 2)
 				pos5 = (x + 4, y + 2)
-				self.buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
-				self.buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
-				self.buildings[(pos3)] = MapObject('wall', pos3[0], pos3[1])
-				self.buildings[(pos4)] = MapObject('wall-front', pos4[0], pos4[1])
-				self.buildings[(pos5)] = MapObject('wall-front', pos5[0], pos5[1])
+				buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
+				buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
+				buildings[(pos3)] = MapObject('wall', pos3[0], pos3[1])
+				buildings[(pos4)] = MapObject('wall-front', pos4[0], pos4[1])
+				buildings[(pos5)] = MapObject('wall-front', pos5[0], pos5[1])
 			elif bname == 'wall-front':
 				pos1 = (x + 2, y)
 				pos2 = (x + 2, y + 2)
 				pos3 = (x + 2, y + 3)
 				pos4 = (x, y + 2)
 				pos5 = (x + 4, y + 2)
-				self.buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
-				self.buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
-				self.buildings[(pos3)] = MapObject('wall-front', pos3[0], pos3[1])
-				self.buildings[(pos4)] = MapObject('wall-front', pos4[0], pos4[1])
-				self.buildings[(pos5)] = MapObject('wall-front', pos5[0], pos5[1])
+				buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
+				buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
+				buildings[(pos3)] = MapObject('wall-front', pos3[0], pos3[1])
+				buildings[(pos4)] = MapObject('wall-front', pos4[0], pos4[1])
+				buildings[(pos5)] = MapObject('wall-front', pos5[0], pos5[1])
 			elif bname == 'guardhouse':
 				# guardhouses only happen on side walls, not front or back
 				pos1 = (x + 2, y)
@@ -305,14 +251,15 @@ class Town():
 				pos3 = (x + 2, y + 4)
 				pos4 = (x, y + 2)
 				pos5 = (x + 4, y + 2)
-				self.buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
-				self.buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
-				self.buildings[(pos3)] = MapObject('wall', pos3[0], pos3[1])
-				self.buildings[(pos4)] = MapObject('guardhouse', pos4[0], pos4[1])
-				self.buildings[(pos5)] = MapObject('guardhouse', pos5[0], pos5[1])
+				buildings[(pos1)] = MapObject('wall', pos1[0], pos1[1])
+				buildings[(pos2)] = MapObject('wall', pos2[0], pos2[1])
+				buildings[(pos3)] = MapObject('wall', pos3[0], pos3[1])
+				buildings[(pos4)] = MapObject('guardhouse', pos4[0], pos4[1])
+				buildings[(pos5)] = MapObject('guardhouse', pos5[0], pos5[1])
 			else:
 				x = x + BUILDING_MINITILE_OFFSET_X
-				self.buildings[(x, y)] = MapObject(bname, x, y)
+				buildings[(x, y)] = MapObject(bname, x, y)
+		return buildings
 
 	def neighbors(self, pos):
 		return self.adjacenttiles(pos[0], pos[1], True)
@@ -361,46 +308,23 @@ class Town():
 		# get cost map (1 = ground, size**2 = wall/building)
 		costmap = [1] * self.size**2
 		buildingstarts = []
-		for x, y in self.buildings:
-			building = self.buildings[(x, y)]
-			for j in range(building.height()):
-				for i in range(building.width()):
+		for bx, by in self.minimap:
+			x = bx * MINITILEWIDTH
+			y = by * MINITILEWIDTH
+			bname = self.minimap[(bx, by)]
+			building = mapobjtypes[bname]
+			for j in range(building.height):
+				for i in range(building.width):
 					costmap[(i+x) + self.size * (y+j)] = self.size**2
-			if not building.buildingtype.name in ['wall', 'wall-front', 'xguardhouse']:
+			if not bname in ['wall', 'wall-front']:
 				buildingstarts.append(
-					(x+building.width()-1, y+building.height()))
+					(x+building.width-1, y+building.height))
 
 		paths = []
 
 		center = (self.size//2, self.size//2)
 		for start in buildingstarts:
 			paths.append(basicastar(start, center, self, costmap))
-
-		# from each nexus, get astar to connected nexuses
-		'''
-		
-		for nexpos in self.nexuses:
-			nex = self.nexuses[nexpos]
-			for relnext in nex.next:
-				nextx, nexty = nexpos[0]+relnext[0], nexpos[1]+relnext[1]
-				pos1 = TownNexus.mappos(nexpos[0], nexpos[1], self.size)
-				pos2 = TownNexus.mappos(nextx, nexty, self.size)
-				paths.append(basicastar(pos1, pos2, self, costmap))
-
-			# if exit road from nexus, connect to the nearest of the road outlets
-			if False:
-				outlets = self.getroadoutlets()
-				closestoutlet = None
-				mindist = self.size**2
-				for outlet in outlets:
-					dist = manhattandist(outlet)
-					if dist < mindist:
-						closestoutlet = outlet
-						mindist = dist
-				nexpos = TownNexus.mappos(nex.x, nex.y, self.size)
-				paths.append(
-					basicastar(nexpos, closestoutlet, self, costmap))
-		'''
 
 		# draw paths, overlapping is ok
 		for path in paths:
@@ -423,10 +347,13 @@ class Town():
 		self.road_bitmap = copymap[:]
 
 		# for each building, draw a line of road bordering its south wall
-		for x, y in self.buildings:
-			building = self.buildings[(x, y)]
-			southwally = building.height() + y
-			for i in range(building.width()):
+		for bx, by in self.minimap:
+			x = bx * MINITILEWIDTH
+			y = by * MINITILEWIDTH
+			bname = self.minimap[(bx, by)]
+			building = mapobjtypes[bname]
+			southwally = building.height + y
+			for i in range(building.width):
 				roadpos = (i+x, southwally)
 				if self.inbounds(*roadpos):
 					self.road_bitmap[roadpos[0] + self.size * roadpos[1]] = 1
@@ -445,8 +372,9 @@ def printminimap(town):
 
 def printtown(town):
 	printmap = ['.' if i == 0 else '_' for i in town.road_bitmap]
-	for x, y in town.buildings:
-		building = town.buildings[(x, y)]
+	buildings = town.getbuildings()
+	for x, y in buildings:
+		building = buildings[(x, y)]
 		for i in range(building.width()):
 			for j in range(building.height()):
 				if (
@@ -455,11 +383,11 @@ def printtown(town):
 					j == 0 or
 					(j == building.height()-1 and not
 						(i == building.width() // 2 and 
-						not building.buildingtype.name in ['well', 'wall', 'wall-front']))):
+						not building.mapobjtype.name in ['well', 'wall', 'wall-front']))):
 					try:
 						printmap[(x+i) + town.size * (y+j)] = '#'
 					except:
-						print(x+i, y+j, building.buildingtype.name)
+						print(x+i, y+j, building.mapobjtype.name)
 						input()
 				else:
 					printmap[(x+i) + town.size * (y+j)] = ' '

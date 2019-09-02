@@ -1,0 +1,47 @@
+{
+    "well" : {
+        "name" : "well",
+    	"width" : 2,
+        "height" : 2
+    },
+    "house" : {
+        "name" : "house",
+        "width" : 4,
+        "height" : 4
+    },
+    "tavern" : {
+        "name" : "tavern",
+        "width" : 5,
+        "height" : 4
+    },
+    "shop" : {
+        "name" : "shop",
+        "width" : 4,
+        "height" : 4
+    },
+    "temple" : {
+        "name" : "temple",
+        "width" : 5,
+        "height" : 6
+    },
+    "mansion" : {
+        "name" : "mansion",
+        "width" : 6,
+        "height" : 4
+    },
+    "guardhouse" : {
+        "name" : "guardhouse",
+        "width" : 3,
+        "height" : 4
+    },
+    "wall" : {
+        "name" : "wall",
+        "width" : 3,
+        "height" : 3
+    },
+    "wall-front" : {
+        "name" : "wall-front",
+        "width" : 3,
+        "height" : 4
+    }
+}

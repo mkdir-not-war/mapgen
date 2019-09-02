@@ -29,6 +29,9 @@ draw_offset_y = 0
 # Region size
 regionside = 32
 
+def printlocal(root, con, local):
+	pass
+
 def printworld(root, con, world):
 	for y in range(world.map_height):
 		for x in range(world.map_width):
