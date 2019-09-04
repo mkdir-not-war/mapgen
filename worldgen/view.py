@@ -12,6 +12,7 @@ from noise import NoiseGrid
 class ViewState(Enum):
 	WORLD = 1
 	REGION = 2
+	LOCAL = 3
 
 screen_width = 80
 screen_height = 80
@@ -30,7 +31,7 @@ draw_offset_y = 0
 regionside = 32
 
 def printlocal(root, con, local):
-	pass
+	con.blit(root)
 
 def printworld(root, con, world):
 	for y in range(world.map_height):
@@ -225,7 +226,11 @@ def main():
 						mapy < regionside):
 
 						if event.button == libtcod.event.BUTTON_LEFT:
-							pass
+							#localmap = LocalMap()
+							viewstate = ViewState.LOCAL
+							con.clear()
+							printUI(con, world, region, viewstate)
+							libtcod.console_flush()
 						elif event.button == libtcod.event.BUTTON_RIGHT:
 							newadj = {}
 							cx, cy = (regionside//2, regionside//2)
@@ -282,6 +287,29 @@ def main():
 					if event.sym == libtcod.event.K_ESCAPE:
 						viewstate = ViewState.WORLD
 						adjregions.clear()
+
+			elif viewstate == ViewState.LOCAL:
+				draw_offset_x = (int)((screen_width - map_width) / 2)
+				draw_offset_y = (int)((screen_height - map_height) / 2)
+
+				#printlocal(root, con, localmap)
+				if event.type == "MOUSEBUTTONDOWN":
+					scrx, scry = event.tile
+					mapx = scrx - draw_offset_x
+					mapy = scry - draw_offset_y
+					if (mapx >= 0 and
+						mapx < map_width and
+						mapy >= 0 and
+						mapy < map_height):
+
+						if event.button == libtcod.event.BUTTON_LEFT:
+							pass
+
+				elif event.type == "KEYDOWN":
+					if event.sym == libtcod.event.K_ESCAPE:
+						viewstate = ViewState.REGION
+						con.clear()
+						libtcod.console_flush()
 	
 		con.clear()
 		printUI(con, world, region, viewstate)
