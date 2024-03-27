@@ -4,7 +4,7 @@ Required: python tcod
 To generate world with biomes:
   > cd worldgen
 
-  python world-test.py
+  > python world-test.py
 
 optionally, provide the world seed (e.g. 11655):
   > python world-test.py 11655
