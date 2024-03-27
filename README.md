@@ -22,7 +22,7 @@ To generate world with biomes & region maps:
   > python view.py
 
 optionally, provide the world seed (e.g. 11655):
-  > python world-test.py 11655
+  > python view.py 11655
 
 In world-test program:
   * Enter                             => generate new world
